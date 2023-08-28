@@ -53,7 +53,7 @@ ThreadPool<T>::ThreadPool(int thread_num, int max_requests) :
     // 创建指定的线程数，并将它们设置为脱离线程，以便让他们自己释放资源
     for(int i = 0; i < thread_num; i++) {
         Info("create the %dth thread", i);
-        printf("create the %dth thread", i); // TODO-DEL
+        printf("create the %dth thread\n", i); // TODO-DEL
 
         // c++的线程执行函数worker，必须是静态函数
         // 第三个参数是一个指向函数的指针，该函数将在新线程中执行
@@ -76,7 +76,7 @@ ThreadPool<T>::ThreadPool(int thread_num, int max_requests) :
 template<typename T>
 ThreadPool<T>::~ThreadPool()
 {
-    is_stop_thread = ture;
+    is_stop_thread = true;
     // 线程数组中是分离线程，会自动释放资源
 }
 
@@ -93,7 +93,7 @@ bool ThreadPool<T>::add_task(T* request)
     // 有任务需要处理,信号量增加
     // 用于后续判读线程是阻塞，还是继续执行
     m_queuestatus.post();
-    return ture;
+    return true;
 }
 
 // 静态的线程执行函数
@@ -120,7 +120,7 @@ void ThreadPool<T>::run()
         m_workqueue.pop_front();
         m_queuelocker.unlock();
         if(request) {
-            request->startprocess(); // 交给Http处理类，真正开始处理任务
+            request->start_process(); // 交给Http处理类，真正开始处理任务
         }
     }
 }

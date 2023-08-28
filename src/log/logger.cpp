@@ -45,8 +45,9 @@ std::string Logger::getDatewithTime() { // 用于获取更详细的时间信息
                                std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count() * 1000;
     time_t tt = std::chrono::system_clock::to_time_t(now);
     // localtime_r()函数是可重入的，它接受一个额外的tm结构指针，以避免静态缓冲区的冲突
-    struct tm tm_result;
-    auto time_tm = localtime_r(&tt, &tm_result);
+    //struct tm tm_result;
+    // auto time_tm = localtime_r(&tt, &tm_result);
+    auto time_tm = localtime(&tt);
     char strTimeStamp[128] = {0};
     if(time_tm != nullptr) {
         sprintf(strTimeStamp, "%d-%02d-%02d %02d:%02d:%02d:%03d", time_tm->tm_year +1900, // 毫秒数不足三位前面补零

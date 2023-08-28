@@ -1,7 +1,7 @@
 #ifndef TINYWEBSERVER_LOCKER_H
 #define TINYWEBSERVER_LOCKER_H
 
-#include <phtread.h>
+#include <pthread.h>
 #include <exception>
 #include <semaphore.h>
 
@@ -16,7 +16,7 @@ public:
         }
     }
     ~Locker() {
-        pthread_mutex_destory(&m_mutex);
+        pthread_mutex_destroy(&m_mutex);
     }
 
     bool lock() {
@@ -44,7 +44,7 @@ public:
         }
     }
     ~Condition() {
-        pthread_cond_destory();
+        pthread_cond_destroy(&m_condition);
     }
 
     // 当前线程阻塞，直到另一个线程通过调用
@@ -61,7 +61,7 @@ public:
 
     // 唤醒线程，让条件变量增加
     bool signal() { // 唤醒一个或多个
-        return pthread_cond_wait(&m_condition) == 0;
+        return pthread_cond_signal(&m_condition) == 0;
     }
     bool broadcast() { // 唤醒所有
         return pthread_cond_broadcast(&m_condition) == 0;

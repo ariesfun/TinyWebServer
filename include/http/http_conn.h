@@ -1,6 +1,10 @@
 #ifndef TINYWEBSERVER_HTTP_CONN_H
 #define TINYWEBSERVER_HTTP_CONN_H
 
+#include <memory>
+#include <netinet/in.h> // sockaddr_in类型
+#include "epoller.h"
+
 class HttpConn {
 public:
     HttpConn() {}
@@ -9,8 +13,8 @@ public:
     void init(int sockfd, const sockaddr_in &addr); // 初始化当前建立连接的客户端信息
     void close_conn();  // 关闭已建立的连接
 
-    void read(); // 一次性读写数据
-    void write();
+    bool read(); // 一次性读写数据
+    bool write();
 
     void start_process(); // 开始解析请求报文
 
@@ -20,6 +24,8 @@ public:
 private:
     int m_http_sockfd; // 进行socket通信的fd和地址
     sockaddr_in m_http_addr;
+
+    std::unique_ptr<Epoller> epoller; // epool指针对象
 };
 
 #endif //TINYWEBSERVER_HTTP_CONN_H
