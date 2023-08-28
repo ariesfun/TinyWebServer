@@ -1,3 +1,5 @@
-[2023-08-28 17:44:17:521] [WARN] [main.cpp:16] (func:main) <thread-id:16365355555079709947> warning message
-[2023-08-28 17:44:17:521] [ERROR] [main.cpp:17] (func:main) <thread-id:16365355555079709947> error message
-[2023-08-28 17:44:17:521] [FATAL] [main.cpp:18] (func:main) <thread-id:16365355555079709947> fatal massgae
+[2023-08-28 19:53:45:538] [FATAL] [main.cpp:18] (func:main) <thread-id:16365355555079709947> fatal massgae
+[2023-08-28 20:17:47:938] [INFO] [main.cpp:15] (func:main) <thread-id:16365355555079709947> info message
+[2023-08-28 20:17:47:940] [WARN] [main.cpp:16] (func:main) <thread-id:16365355555079709947> warning message
+[2023-08-28 20:17:47:940] [ERROR] [main.cpp:17] (func:main) <thread-id:16365355555079709947> error message
+[2023-08-28 20:17:47:940] [FATAL] [main.cpp:18] (func:main) <thread-id:16365355555079709947> fatal massgae
