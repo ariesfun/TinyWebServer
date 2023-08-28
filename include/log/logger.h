@@ -4,24 +4,25 @@
 #include <string>
 #include <fstream>
 #include <mutex>
+#include <libgen.h>
 
 namespace ariesfun{
 namespace log{
 
 #define Debug(format, ...) \
-    Logger::getInstance()->log_write(Logger::DEBUG, __FILE__, __LINE__, format, ##__VA_ARGS__);
+    Logger::getInstance()->log_write(Logger::DEBUG, basename(__FILE__), __LINE__, __FUNCTION__, format, ##__VA_ARGS__);
 
 #define Info(format, ...) \
-    Logger::getInstance()->log_write(Logger::INFO, __FILE__, __LINE__, format, ##__VA_ARGS__);
+    Logger::getInstance()->log_write(Logger::INFO, basename(__FILE__), __LINE__, __FUNCTION__, format, ##__VA_ARGS__);
 
 #define Warn(format, ...) \
-    Logger::getInstance()->log_write(Logger::WARN, __FILE__, __LINE__, format, ##__VA_ARGS__);
+    Logger::getInstance()->log_write(Logger::WARN, basename(__FILE__), __LINE__, __FUNCTION__, format, ##__VA_ARGS__);
 
 #define Error(format, ...) \
-    Logger::getInstance()->log_write(Logger::ERROR, __FILE__, __LINE__, format, ##__VA_ARGS__);
+    Logger::getInstance()->log_write(Logger::ERROR, basename(__FILE__), __LINE__, __FUNCTION__, format, ##__VA_ARGS__);
 
 #define Fatal(format, ...) \
-    Logger::getInstance()->log_write(Logger::FATAL, __FILE__, __LINE__, format, ##__VA_ARGS__);
+    Logger::getInstance()->log_write(Logger::FATAL, basename(__FILE__), __LINE__, __FUNCTION__,format, ##__VA_ARGS__);
 
 class Logger {
 public:
@@ -40,7 +41,11 @@ public:
     void open(const std::string &filename);
     void close();
 
-    void log_write(Level level, const char* file, int line, const char* format, ...); // 写入日志信息的操作
+    // 封装获取当前的时间字符串和线程ID，参考实现：https://github.com/mochazi/easy_log
+    std::string getDatewithTime();
+    unsigned long getThreadId();
+
+    void log_write(Level level, const char* file, int line, const char* func, const char* format, ...); // 写入日志信息的操作
     void log_setlevel(Level level);
     void log_maxsize(int bytes);
 

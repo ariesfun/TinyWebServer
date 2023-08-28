@@ -1,2 +1,3 @@
-2023-08-22 19:32:37 [ERROR] E:\CPP ResumeProjects\TinyWebServer\main.cpp:17 error message
-2023-08-22 19:32:37 [FATAL] E:\CPP ResumeProjects\TinyWebServer\main.cpp:18 fatal massgae
+[2023-08-28 17:44:17:521] [WARN] [main.cpp:16] (func:main) <thread-id:16365355555079709947> warning message
+[2023-08-28 17:44:17:521] [ERROR] [main.cpp:17] (func:main) <thread-id:16365355555079709947> error message
+[2023-08-28 17:44:17:521] [FATAL] [main.cpp:18] (func:main) <thread-id:16365355555079709947> fatal massgae
