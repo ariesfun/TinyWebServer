@@ -15,7 +15,7 @@ using namespace ariesfun::log;
 template<typename T>
 class ThreadPool {
 public:
-    ThreadPool(int thread_num = 8, int max_requests = 10000); // 设置默认值
+    ThreadPool(int thread_num, int max_requests); // 设置默认值
     ~ThreadPool();
 
     bool add_task(T* request); // 添加任务

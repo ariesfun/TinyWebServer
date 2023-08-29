@@ -45,9 +45,8 @@ std::string Logger::getDatewithTime() { // 用于获取更详细的时间信息
                                std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count() * 1000;
     time_t tt = std::chrono::system_clock::to_time_t(now);
     // localtime_r()函数是可重入的，它接受一个额外的tm结构指针，以避免静态缓冲区的冲突
-    //struct tm tm_result;
-    // auto time_tm = localtime_r(&tt, &tm_result);
-    auto time_tm = localtime(&tt);
+    struct tm tm_result;
+    auto time_tm = localtime_r(&tt, &tm_result);
     char strTimeStamp[128] = {0};
     if(time_tm != nullptr) {
         sprintf(strTimeStamp, "%d-%02d-%02d %02d:%02d:%02d:%03d", time_tm->tm_year +1900, // 毫秒数不足三位前面补零
@@ -73,13 +72,12 @@ void Logger::log_write(Level level, const char* file, int line, const char* func
     if(m_fout.fail()) {
         throw std::logic_error("write log file failed: " + m_filename);
     }
-    const char *timestamp = {0};
-    timestamp = getDatewithTime().c_str();
+    const std::string timestamp = getDatewithTime();
     const char* ftm = "[%s] [%s] [%s:%d] (func:%s) <thread-id:%lu> ";
-    int size = snprintf(nullptr, 0, ftm, timestamp, level_str[level], file, line, func, getThreadId());
+    int size = snprintf(nullptr, 0, ftm, timestamp.c_str(), level_str[level], file, line, func, getThreadId());
     if(size > 0) { // size是ftm串的长度
         char* buffer = new char[size + 1];
-        snprintf(buffer, size + 1, ftm, timestamp, level_str[level], file, line, func, getThreadId());
+        snprintf(buffer, size + 1, ftm, timestamp.c_str(), level_str[level], file, line, func, getThreadId());
         buffer[size] = '\0';
         m_fout << buffer;
         m_cursize += size;

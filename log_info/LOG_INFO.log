@@ -1,2 +1,14 @@
-[] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:1945319989281283034> create the 6th thread
-[] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:1945319989281283034> create the 7th thread
+[2023-08-29 11:05:43:725] [INFO] [webserver.cpp:24] (func:log_init) <thread-id:6856973607087598780> -----------INIT---------------
+[2023-08-29 11:05:43:725] [INFO] [webserver.cpp:25] (func:log_init) <thread-id:6856973607087598780> info message
+[2023-08-29 11:05:43:725] [INFO] [webserver.cpp:26] (func:log_init) <thread-id:6856973607087598780> info message
+[2023-08-29 11:05:43:725] [INFO] [webserver.cpp:27] (func:log_init) <thread-id:6856973607087598780> info message
+[2023-08-29 11:05:43:725] [INFO] [webserver.cpp:28] (func:log_init) <thread-id:6856973607087598780> info message
+[2023-08-29 11:05:43:725] [INFO] [webserver.cpp:29] (func:log_init) <thread-id:6856973607087598780> ------------------------------
+[2023-08-29 11:05:43:725] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:6856973607087598780> create the 0th thread
+[2023-08-29 11:05:43:725] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:6856973607087598780> create the 1th thread
+[2023-08-29 11:05:43:725] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:6856973607087598780> create the 2th thread
+[2023-08-29 11:05:43:725] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:6856973607087598780> create the 3th thread
+[2023-08-29 11:05:43:726] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:6856973607087598780> create the 4th thread
+[2023-08-29 11:05:43:726] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:6856973607087598780> create the 5th thread
+[2023-08-29 11:05:43:726] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:6856973607087598780> create the 6th thread
+[2023-08-29 11:05:43:726] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:6856973607087598780> create the 7th thread

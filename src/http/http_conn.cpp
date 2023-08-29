@@ -1,4 +1,8 @@
 #include "http_conn.h"
+#include <cstdio>
+
+#include "logger.h"
+using namespace ariesfun::log;
 
 int HttpConn::m_http_epollfd = -1;
 int HttpConn::m_client_cnt = 0;
