@@ -7,7 +7,8 @@ void Epoller::add_fd(int epollfd, int fd, bool one_shot)
 {
     epoll_event event;
     event.data.fd = fd;
-    event.events = EPOLLIN | EPOLLRDHUP;
+    // event.events = EPOLLIN | EPOLLRDHUP; // 水平触发
+    event.events = EPOLLIN | EPOLLET | EPOLLRDHUP; // 改为边沿触发
     if(one_shot) {
         event.events | EPOLLONESHOT;
     }
