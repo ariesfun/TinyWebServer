@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <netinet/in.h> // sockaddr_in类型
+#include <sys/stat.h>// stat结构体
 #include "epoller.h"
 
 class HttpConn {
@@ -82,6 +83,14 @@ private:
     int m_iv_cnt;           // 被写的内存块数量
 
     bool process_response(HTTP_CODE ret); // 进行HTTP响应
+    bool add_response_info(const char* format, ...); // 具体的响应行信息（可变参字符串）
+    bool add_response_statline(int status, const char* title);
+    bool add_response_headers(int content_length);
+    bool add_response_content(const char* content);
+    bool add_response_connstatus();
+    bool add_response_contentlen(int content_length);
+    bool add_response_contenttype(); //响应体信息类型
+    bool add_response_blankline();
 
 private:
     char* m_url;                            // 请求的目标文件名

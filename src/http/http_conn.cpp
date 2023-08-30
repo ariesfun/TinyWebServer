@@ -9,6 +9,7 @@
 #include <unistd.h> // close()
 #include <sys/mman.h> // mmap()
 #include <sys/uio.h> // writev()
+#include <cstdarg> // va_start()
 
 #include "logger.h"
 using namespace ariesfun::log;
@@ -18,6 +19,17 @@ int HttpConn::m_client_cnt = 0;
 
 // 网站资源根目录
 const char* web_root_src = "/home/ariesfun/Resume_Projects/TinyWebServer/resources"; 
+
+// 生产HTTP响应的一些状态信息
+const char* ok_200_title = "OK";
+const char* error_400_title = "Bad Request";
+const char* error_400_form = "Your request has bad syntax or is inherently impossible to satisfy.\n";
+const char* error_403_title = "Forbidden";
+const char* error_403_form = "You do not have permission to get file from this server.\n";
+const char* error_404_title = "Not Found";
+const char* error_404_form = "The requested file was not found on this server.\n";
+const char* error_500_title = "Internal Error";
+const char* error_500_form = "There was an unusual problem serving the requested file.\n";
 
 void HttpConn::init(int sockfd, const sockaddr_in &addr)
 {
@@ -371,8 +383,128 @@ char* HttpConn::get_linedata()
     return m_readbuffer + m_start_line;
 }
 
-// 生成响应，发送给客户端
+// 根据处理的HTTP请求结果，生成响应发送给客户端
 bool HttpConn::process_response(HTTP_CODE ret)
 {
+    switch (ret) // 生存对于的HTTP响应报文
+    {
+        case BAD_REQUEST: // 语法错误
+        {
+            add_response_statline(400, error_400_title);
+            add_response_headers(strlen(error_400_form));
+            if(!add_response_content(error_400_form)) {
+                return false;
+            }
+            break;
+        }
+        case NO_RESOURCE: // 没有该资源(404)
+        {
+            add_response_statline(404, error_404_title);
+            add_response_headers(strlen(error_404_form));
+            if(!add_response_content(error_404_form)) {
+                return false;
+            }
+            break;
+        }
+        case FORBIDDEN_REQUEST:
+        {
+            add_response_statline(404, error_403_title);
+            add_response_headers(strlen(error_403_form));
+            if(!add_response_content(error_403_form)) {
+                return false;
+            }
+            break;
+        }
+        case INTERNAL_ERROR: // 内部错误
+        {   
+            add_response_statline(500, error_500_title);
+            add_response_headers(strlen(error_500_form));
+            if(!add_response_content(error_500_form)) {
+                return false;
+            }
+            break;
+        }
+        case FILE_REQUEST: // 访问文件请求
+        {
+            add_response_statline(200, ok_200_title);
+            add_response_headers(m_file_status.st_size);
+            m_iv[0].iov_base = m_writebuffer; // 指向数据块的起始地址
+            m_iv[0].iov_len = m_write_index; // // 数据块的长度
+            m_iv[1].iov_base = m_file_address;
+            m_iv[1].iov_len = m_file_status.st_size;
+            m_iv_cnt = 2;
+            return true;
+            break;
+        }
+        default:
+            return false;
+            break;
+    }
+    m_iv[0].iov_base = m_writebuffer; // 默认只存写缓冲区的信息
+    m_iv[0].iov_len = m_write_index; 
+    m_iv_cnt = 1;
+    return true;
+}
 
+// 每行的响应信息格式化封装
+bool HttpConn::add_response_info(const char* format, ...)
+{
+    if(m_write_index >= WRITE_BUFFER_SIZE) {
+        return false;
+    }
+    va_list arg_list;
+    va_start(arg_list, format); // 存入写缓冲区中
+    // vsnprintf(arg_content, len + 1, format, arg_ptr); // 参数列表格式
+    int len = vsnprintf((m_writebuffer + m_write_index), (WRITE_BUFFER_SIZE - m_write_index - 1), format, arg_list);
+    if(len >= (WRITE_BUFFER_SIZE - m_write_index - 1)) {
+        return false;
+    }
+    m_write_index += len;
+    va_end(arg_list);
+    return true;
+}
+
+// 生成响应首行
+bool HttpConn::add_response_statline(int status, const char* title)
+{
+    return add_response_info("%s %d %s\r\n", "HTTP/1.1", status, title);
+}
+
+// 生成响应头部
+bool HttpConn::add_response_headers(int content_length)
+{
+    add_response_contentlen(content_length);
+    add_response_contenttype();
+    add_response_connstatus();
+    add_response_blankline();
+}
+
+// 生成响应体
+bool HttpConn::add_response_content(const char* content)
+{
+    add_response_info("%s", content);
+}
+
+// 响应连接状态
+bool HttpConn::add_response_connstatus()
+{
+    return add_response_info("Connection: %s\r\n", (m_conn_status == true) ? "keep-alive" : "close");
+}
+
+// 生成响应体长度
+bool HttpConn::add_response_contentlen(int content_length)
+{
+    return add_response_info("Content-Length: %d\r\n", content_length);
+}
+
+// 生成响应体类型
+bool HttpConn::add_response_contenttype()
+{
+    return add_response_info("Content-Type: %s\r\n", "text/html");
+}
+
+// 生成响应头类型
+bool HttpConn::add_response_blankline()
+{
+    return add_response_info("%s", "\r\n");
 }
