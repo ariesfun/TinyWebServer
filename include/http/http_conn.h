@@ -11,12 +11,7 @@ private:
     // HTTP请求方法，这里只支持GET
     enum METHOD {GET = 0, POST, HEAD, PUT, DELETE, TRACE, OPTIONS, CONNECT};
     
-    /*
-        解析客户端请求时，主状态机的状态
-        CHECK_STATE_REQUESTLINE:当前正在分析请求行
-        CHECK_STATE_HEADER:当前正在分析头部字段
-        CHECK_STATE_CONTENT:当前正在解析请求体
-    */
+    // 解析客户端请求时，主状态机的状态
     enum CHECK_STATE { CHECK_STATE_REQUESTLINE = 0, CHECK_STATE_HEADER, CHECK_STATE_CONTENT };
     
     /*
@@ -45,36 +40,59 @@ public:
 
     bool read(); // 一次性读写数据
     bool write();
-
     void start_process(); // 开始解析请求报文
+
     static int m_http_epollfd; // 共享数据，所有socket上的事件都被注册到一个epoll对象中
     static int m_client_cnt; // 当前连接的用户数量
 
     static const int READ_BUFFER_SIZE = 2048; // 读写缓冲区大小  
     static const int WRITE_BUFFER_SIZE = 2048;
+    static const int FILEPATH_LEN = 200;// 访问的文件名路径的最大长度
 
 private:
-    void parse_init();
+    void my_init(); // 初始化一些需要保存的解析信息或响应信息
     char* get_linedata(); // 获得一行数据
 
 private:
     int m_http_sockfd; // 进行socket通信的fd和地址
     sockaddr_in m_http_addr;
-
     std::unique_ptr<Epoller> epoller; // epool指针对象
 
-    char m_readbuffer[READ_BUFFER_SIZE];
+    char m_readbuffer[READ_BUFFER_SIZE] = {0};
     int m_read_index; // 标记读入数据的最后一个字节的下一个位置
     int m_cur_index; // 当前正在解析的位置
     int m_start_line; // 解析行的起始位置
 
     CHECK_STATE m_cur_mainstate; // 主状态机所处状态
-
     HTTP_CODE parse_request(); // 解析HTTP请求, 处理下面的信息
     HTTP_CODE parse_request_line(char* text);
     HTTP_CODE parse_request_headers(char* text);
     HTTP_CODE parse_request_content(char* text);
     LINE_STATUS parse_detail_line(); // 从状态机，根据换行解析
+    HTTP_CODE do_request(); // 做具体的请求处理, 进行业务处理
+    void free_mmap(); // 释放映射的资源 
+
+
+    char m_writebuffer[WRITE_BUFFER_SIZE] = {0};
+    int m_write_index;      // 每次写数据的首位置，待发送的字节数
+
+    // iovec + writev 可以在一个系统调用中操作多个分散的缓冲区
+    // 从而避免了多次系统调用的开销
+    struct iovec m_iv[2];   // 结合writev进行写操作
+    int m_iv_cnt;           // 被写的内存块数量
+
+    bool process_response(HTTP_CODE ret); // 进行HTTP响应
+
+private:
+    char* m_url;                            // 请求的目标文件名
+    METHOD m_method;                        // 请求方法
+    char* m_version;                        // 协议版本
+    char* m_hostaddr;                       // 主机地址
+    bool m_conn_status;                     // http连接状态
+    int m_content_length;                   // http请求体消息的总长度
+    char m_real_file[FILEPATH_LEN] = {0};   // 客户端请求访问的文件路径
+    struct stat m_file_status;              // 请求的目标文件状态
+    char* m_file_address;                   // 目标文件被映射到内存的起始位置
 };
 
 #endif //TINYWEBSERVER_HTTP_CONN_H
