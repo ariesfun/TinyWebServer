@@ -20,13 +20,10 @@ void WebServer::log_init()
     // 日志类配置初始化
     Logger::getInstance()->open("../log_info/LOG_INFO.log");
     Logger::getInstance()->log_setlevel(Logger::INFO);
-    Logger::getInstance()->log_maxsize(2000);
-    Info("-----------INIT---------------");
-    Info("info message");
-    Info("info message");
-    Info("info message");
-    Info("info message");
-    Info("------------------------------");
+    Logger::getInstance()->log_maxsize(10240);
+    Info("-------------INIT-----------------");
+    Info("--------SERVER STARTING-----------");
+    Info("----------------------------------");
 }
 
 void WebServer::server_init()
@@ -102,10 +99,10 @@ void WebServer::start()
 }
 }
 
-int WebServer::check_error(int ret, const char* msg) // 进行错误检查
+int WebServer::check_error(int ret, const char* format) // 进行错误检查
 {
     if(ret == -1) { // linux系统IO函数失败会返回-1
-        Error(msg);
+        Error(format);
         exit(-1);
     }
     return ret;

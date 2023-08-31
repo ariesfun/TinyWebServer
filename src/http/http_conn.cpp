@@ -36,11 +36,13 @@ void HttpConn::init(int sockfd, const sockaddr_in &addr)
     m_http_sockfd = sockfd; // 保存当前连接的客户端信息
     m_http_addr = addr;
     int reuse = 1; // 设置端口复用
-    setsockopt(m_http_sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+    int ret = setsockopt(m_http_sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+    if(ret == -1) {
+        Error("setsockopt oprate error!");
+    }
     // proactor模式，先让HttpConn类来处理
     epoller->add_fd(m_http_epollfd, sockfd, true);
     m_client_cnt++;
-
     my_init();
 }
 
@@ -60,6 +62,9 @@ void HttpConn::my_init() // 初始化解析或响应要保存的信息
     m_content_length = 0;
 
     m_write_index = 0;
+    
+    send_bytes = 0;
+    to_send_bytes = 0;
 }
 
 void HttpConn::close_conn() 
@@ -88,7 +93,7 @@ bool HttpConn::read() // 将数据读入到读缓冲区，解析
             }
             return false;
         }
-        else if(read_bytes == 0) { // 连接关闭
+        else if(read_bytes == 0) { // 对方连接关闭
             return false;
         }
         m_read_index += read_bytes;
@@ -100,9 +105,6 @@ bool HttpConn::read() // 将数据读入到读缓冲区，解析
 bool HttpConn::write() // 响应存入到写缓冲区，发送
 {
     int temp = 0;
-    int send_bytes = 0; // 已发送的字节数
-    int to_send_bytes = m_write_index; // 待发送的字节
-
     if(to_send_bytes == 0) { // 没有要发送的数据了，结束响应
         epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
         my_init();
@@ -122,19 +124,26 @@ bool HttpConn::write() // 响应存入到写缓冲区，发送
             free_mmap();
             return false;
         }
-        to_send_bytes -= temp; // 更新信息，还剩下多少字节需要发送
         send_bytes += temp; // 已经发送了多少字节
-        if(to_send_bytes <= send_bytes) {
+        to_send_bytes -= temp; // 更新信息，还剩下多少字节需要发送
+        if(send_bytes >= m_iv[0].iov_len) {
+            m_iv[0].iov_len = 0;
+            m_iv[1].iov_base = m_file_address + (to_send_bytes - m_write_index);
+            m_iv[1].iov_len = to_send_bytes;
+        }
+        else {
+            m_iv[0].iov_base = m_writebuffer + to_send_bytes;
+            m_iv[0].iov_len = m_iv[0].iov_len - temp;
+        }
+        if(to_send_bytes <= 0) {
             // 发送HTTP响应成功, 根据HTTP请求中的Connection连接状态
             // 来决定是否关闭连接
             free_mmap();
             if(m_conn_status) {
                 my_init();
-                epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
                 return true;
             }
             else {
-                epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
                 return false;
             }
         }
@@ -172,7 +181,7 @@ HttpConn::HTTP_CODE HttpConn::parse_request()
         // 解析到了请求体和一行数据
         line_data = get_linedata(); // 获得一行数据
         m_start_line = m_cur_index; // 更新解析的行首位置
-        printf("got 1 http line data:\n%s", line_data);
+        printf("got 1 http line data: %s", line_data);
 
         switch (m_cur_mainstate) // 主状态机 (有效状态机)
         {
@@ -217,6 +226,9 @@ HttpConn::HTTP_CODE HttpConn::parse_request()
 HttpConn::HTTP_CODE HttpConn::parse_request_line(char* text)
 {
     m_url = strpbrk(text, " \t"); // 判断字符空格或制表符哪个先在text中出现，并返回位置
+    if(!m_url) {
+        return BAD_REQUEST;
+    }
     *(m_url++) = '\0';
     // GET\0/index.html HTTP/1.1
 
@@ -250,7 +262,6 @@ HttpConn::HTTP_CODE HttpConn::parse_request_line(char* text)
     // 更新检查状态
     // 主状态机状态变为检查请求头
     m_cur_mainstate = CHECK_STATE_HEADER;
-
     return NO_REQUEST;
 }
 
@@ -264,14 +275,14 @@ HttpConn::HTTP_CODE HttpConn::parse_request_headers(char* text)
         }
         return GET_REQUEST; // 得到了一个完整的请求头部信息
     } // 下面只做常见的请求头的解析
-    else if(strncmp(text, "Host:", 5) == 0) { // 主机域名
+    else if(strncasecmp(text, "Host:", 5) == 0) { // 主机域名
         text += 5;
         // 192.168.184.10:8888, 此时指针指向'192'的'1'位置
         text += strspn(text, " \t"); // 移动指针到第一个不在这个字符集合中的字符处
         m_hostaddr = text;
         Info("host_addr:%s", m_hostaddr);
     }
-    else if(strncmp(text, "Connection:", 11) == 0) { // 获取连接状态
+    else if(strncasecmp(text, "Connection:", 11) == 0) { // 获取连接状态
         text += 11;
         text += strspn(text, " \t");
         if(strcmp(text, "keep-alive") == 0) {
@@ -279,7 +290,7 @@ HttpConn::HTTP_CODE HttpConn::parse_request_headers(char* text)
         }
         Info("http connection status: %d", m_conn_status);
     }
-    else if(strncmp(text, "Content-Length:", 15) == 0) { // 内容长度
+    else if(strncasecmp(text, "Content-Length:", 15) == 0) { // 内容长度
         text += 15;
         text += strspn(text, " \t");
         m_content_length = atol(text);
@@ -329,8 +340,8 @@ HttpConn::LINE_STATUS HttpConn::parse_detail_line() // 解析一行数据报文�
             }
             return LINE_BAD;
         }
-        return LINE_OPEN; // 数据不完整
     }
+    return LINE_OPEN; // 数据不完整
 }   
 
 // 当得到一个完整正确的HTTP请求时，我们就分析目标文件的属性
@@ -433,16 +444,17 @@ bool HttpConn::process_response(HTTP_CODE ret)
             m_iv[1].iov_base = m_file_address;
             m_iv[1].iov_len = m_file_status.st_size;
             m_iv_cnt = 2;
+
+            to_send_bytes = m_write_index + m_file_status.st_size;
             return true;
-            break;
         }
         default:
             return false;
-            break;
     }
     m_iv[0].iov_base = m_writebuffer; // 默认只存写缓冲区的信息
     m_iv[0].iov_len = m_write_index; 
     m_iv_cnt = 1;
+    to_send_bytes = m_write_index;
     return true;
 }
 

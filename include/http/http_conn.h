@@ -102,6 +102,9 @@ private:
     char m_real_file[FILEPATH_LEN] = {0};   // 客户端请求访问的文件路径
     struct stat m_file_status;              // 请求的目标文件状态
     char* m_file_address;                   // 目标文件被映射到内存的起始位置
+
+    int send_bytes; // 已发送的字节数
+    int to_send_bytes; // 待发送的字节数
 };
 
 #endif //TINYWEBSERVER_HTTP_CONN_H

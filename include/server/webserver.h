@@ -25,7 +25,7 @@ public:
     void start();
     
     // 错误处理
-    int check_error(int ret, const char* msg);
+    int check_error(int ret, const char* format);
     void handle_sig(int sig, void(handler)(int));
 
 private:
