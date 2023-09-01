@@ -15,7 +15,7 @@ using namespace ariesfun::log;
 template<typename T>
 class ThreadPool {
 public:
-    ThreadPool(int thread_num, int max_requests); // 设置默认值
+    ThreadPool(int thread_num , int max_requests); // 设置默认值
     ~ThreadPool();
 
     bool add_task(T* request); // 添加任务
@@ -53,7 +53,6 @@ ThreadPool<T>::ThreadPool(int thread_num, int max_requests) :
     // 创建指定的线程数，并将它们设置为脱离线程，以便让他们自己释放资源
     for(int i = 0; i < thread_num; i++) {
         Info("create the %dth thread", i);
-        printf("create the %dth thread\n", i); // TODO-DEL
 
         // c++的线程执行函数worker，必须是静态函数
         // 第三个参数是一个指向函数的指针，该函数将在新线程中执行

@@ -1,57 +1,9 @@
-[2023-08-31 19:58:59:087] [INFO] [webserver.cpp:24] (func:log_init) <thread-id:12611607137763162115> -------------INIT-----------------
-[2023-08-31 19:58:59:087] [INFO] [webserver.cpp:25] (func:log_init) <thread-id:12611607137763162115> --------SERVER STARTING-----------
-[2023-08-31 19:58:59:087] [INFO] [webserver.cpp:26] (func:log_init) <thread-id:12611607137763162115> ----------------------------------
-[2023-08-31 19:58:59:087] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:12611607137763162115> create the 0th thread
-[2023-08-31 19:58:59:087] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:12611607137763162115> create the 1th thread
-[2023-08-31 19:58:59:087] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:12611607137763162115> create the 2th thread
-[2023-08-31 19:58:59:087] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:12611607137763162115> create the 3th thread
-[2023-08-31 19:58:59:087] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:12611607137763162115> create the 4th thread
-[2023-08-31 19:58:59:087] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:12611607137763162115> create the 5th thread
-[2023-08-31 19:58:59:087] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:12611607137763162115> create the 6th thread
-[2023-08-31 19:58:59:088] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:12611607137763162115> create the 7th thread
-[2023-08-31 19:58:59:088] [ERROR] [webserver.cpp:58] (func:start) <thread-id:12611607137763162115> only test ! 4000
-[2023-08-31 19:58:59:088] [ERROR] [webserver.cpp:107] (func:check_error) <thread-id:12611607137763162115> check error test!
-[2023-08-31 19:59:34:887] [INFO] [webserver.cpp:24] (func:log_init) <thread-id:15649927587270881636> -------------INIT-----------------
-[2023-08-31 19:59:34:887] [INFO] [webserver.cpp:25] (func:log_init) <thread-id:15649927587270881636> --------SERVER STARTING-----------
-[2023-08-31 19:59:34:887] [INFO] [webserver.cpp:26] (func:log_init) <thread-id:15649927587270881636> ----------------------------------
-[2023-08-31 19:59:34:887] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15649927587270881636> create the 0th thread
-[2023-08-31 19:59:34:887] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15649927587270881636> create the 1th thread
-[2023-08-31 19:59:34:887] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15649927587270881636> create the 2th thread
-[2023-08-31 19:59:34:888] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15649927587270881636> create the 3th thread
-[2023-08-31 19:59:34:888] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15649927587270881636> create the 4th thread
-[2023-08-31 19:59:34:888] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15649927587270881636> create the 5th thread
-[2023-08-31 19:59:34:888] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15649927587270881636> create the 6th thread
-[2023-08-31 19:59:34:888] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15649927587270881636> create the 7th thread
-[2023-08-31 19:59:51:449] [INFO] [http_conn.cpp:101] (func:read) <thread-id:15649927587270881636> read data is:
-GET / HTTP/1.1
-Host: 192.168.184.10:8888
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/116.0
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
-Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2
-Accept-Encoding: gzip, deflate
-Connection: keep-alive
-Upgrade-Insecure-Requests: 1
+[2023-09-01 18:21:36:029] [INFO] [http_conn.cpp:309] (func:parse_request_headers) <thread-id:6736562084866029208> unknow header Accept-Encoding: gzip, deflate
 
+[2023-09-01 18:21:36:030] [INFO] [http_conn.cpp:194] (func:parse_request) <thread-id:6736562084866029208> got 1 http line data: 
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8
+[2023-09-01 18:21:36:030] [INFO] [http_conn.cpp:309] (func:parse_request_headers) <thread-id:6736562084866029208> unknow header Accept-Language: zh-CN,zh;q=0.9,en;q=0.8
 
-[2023-08-31 20:01:40:280] [INFO] [webserver.cpp:24] (func:log_init) <thread-id:15021631670454999349> -------------INIT-----------------
-[2023-08-31 20:01:40:281] [INFO] [webserver.cpp:25] (func:log_init) <thread-id:15021631670454999349> --------SERVER STARTING-----------
-[2023-08-31 20:01:40:281] [INFO] [webserver.cpp:26] (func:log_init) <thread-id:15021631670454999349> ----------------------------------
-[2023-08-31 20:01:40:281] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15021631670454999349> create the 0th thread
-[2023-08-31 20:01:40:281] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15021631670454999349> create the 1th thread
-[2023-08-31 20:01:40:281] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15021631670454999349> create the 2th thread
-[2023-08-31 20:01:40:282] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15021631670454999349> create the 3th thread
-[2023-08-31 20:01:40:282] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15021631670454999349> create the 4th thread
-[2023-08-31 20:01:40:283] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15021631670454999349> create the 5th thread
-[2023-08-31 20:01:40:283] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15021631670454999349> create the 6th thread
-[2023-08-31 20:01:40:283] [INFO] [thread_pool.h:55] (func:ThreadPool) <thread-id:15021631670454999349> create the 7th thread
-[2023-08-31 20:01:47:442] [INFO] [http_conn.cpp:101] (func:read) <thread-id:15021631670454999349> read data is:
-GET / HTTP/1.1
-Host: 192.168.184.10:8888
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/116.0
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
-Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2
-Accept-Encoding: gzip, deflate
-Connection: keep-alive
-Upgrade-Insecure-Requests: 1
+[2023-09-01 18:21:36:031] [INFO] [http_conn.cpp:194] (func:parse_request) <thread-id:6736562084866029208> got 1 http line data: 
 
-
+[2023-09-01 18:21:36:032] [INFO] [http_conn.cpp:367] (func:do_request) <thread-id:6736562084866029208> the client request file path: /mnt/e/CPP ResumeProjects/TinyWebServer/resources/111

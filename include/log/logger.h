@@ -49,7 +49,7 @@ public:
     void log_setlevel(Level level);
     void log_maxsize(int bytes);
 
-private:
+public:
     Logger();
     ~Logger();
     Logger(const Logger &) = delete;

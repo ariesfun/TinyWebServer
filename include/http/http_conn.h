@@ -30,11 +30,11 @@ private:
     
     // 从状态机的三种可能状态，即行的读取状态，分别表示
     // 1.读取到一个完整的行 2.行出错 3.行数据尚且不完整
-    enum LINE_STATUS { LINE_OK = 0, LINE_BAD, LINE_OPEN };
+    enum LINE_STATUS { LINE_OK = 0, LINE_BAD, LINE_INCOMPLETE };
 
 public:
-    HttpConn() {}
-    ~HttpConn() {}
+    HttpConn();
+    ~HttpConn();
 
     void init(int sockfd, const sockaddr_in &addr); // 初始化当前建立连接的客户端信息
     void close_conn();  // 关闭已建立的连接
@@ -59,7 +59,7 @@ private:
     sockaddr_in m_http_addr;
     std::unique_ptr<Epoller> epoller; // epool指针对象
 
-    char m_readbuffer[READ_BUFFER_SIZE] = {0};
+    char m_readbuffer[READ_BUFFER_SIZE];
     int m_read_index; // 标记读入数据的最后一个字节的下一个位置
     int m_cur_index; // 当前正在解析的位置
     int m_start_line; // 解析行的起始位置
@@ -74,7 +74,7 @@ private:
     void free_mmap(); // 释放映射的资源 
 
 
-    char m_writebuffer[WRITE_BUFFER_SIZE] = {0};
+    char m_writebuffer[WRITE_BUFFER_SIZE];
     int m_write_index;      // 每次写数据的首位置，待发送的字节数
 
     // iovec + writev 可以在一个系统调用中操作多个分散的缓冲区
@@ -85,7 +85,7 @@ private:
     bool process_response(HTTP_CODE ret); // 进行HTTP响应
     bool add_response_info(const char* format, ...); // 具体的响应行信息（可变参字符串）
     bool add_response_statline(int status, const char* title);
-    bool add_response_headers(int content_length);
+    void add_response_headers(int content_length);
     bool add_response_content(const char* content);
     bool add_response_connstatus();
     bool add_response_contentlen(int content_length);
@@ -99,7 +99,7 @@ private:
     char* m_hostaddr;                       // 主机地址
     bool m_conn_status;                     // http连接状态
     int m_content_length;                   // http请求体消息的总长度
-    char m_real_file[FILEPATH_LEN] = {0};   // 客户端请求访问的文件路径
+    char m_real_file[FILEPATH_LEN];         // 客户端请求访问的文件路径
     struct stat m_file_status;              // 请求的目标文件状态
     char* m_file_address;                   // 目标文件被映射到内存的起始位置
 

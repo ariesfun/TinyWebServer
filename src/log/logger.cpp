@@ -73,7 +73,7 @@ void Logger::log_write(Level level, const char* file, int line, const char* func
         throw std::logic_error("write log file failed: " + m_filename);
     }
     const std::string timestamp = getDatewithTime();
-    const char* ftm = "[%s] [%s] [%s:%d] (func:%s) <thread-id:%lu> ";
+    char ftm[] = "[%s] [%s] [%s:%d] (func:%s) <thread-id:%lu> ";
     int size = snprintf(nullptr, 0, ftm, timestamp.c_str(), level_str[level], file, line, func, getThreadId());
     if(size > 0) { // size是ftm串的长度
         char* buffer = new char[size + 1];

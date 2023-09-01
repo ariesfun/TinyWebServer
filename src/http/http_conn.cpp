@@ -1,10 +1,8 @@
 #include "http_conn.h"
-#include <cstdio>
+#include <iostream>
 #include <cstring>
 #include <sys/epoll.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h> // 文件操作
 #include <unistd.h> // close()
 #include <sys/mman.h> // mmap()
@@ -18,7 +16,7 @@ int HttpConn::m_http_epollfd = -1;
 int HttpConn::m_client_cnt = 0;
 
 // 网站资源根目录
-const char* web_root_src = "/home/ariesfun/Resume_Projects/TinyWebServer/resources"; 
+const char* web_root_src = "/mnt/e/CPP ResumeProjects/TinyWebServer/resources";
 
 // 生产HTTP响应的一些状态信息
 const char* ok_200_title = "OK";
@@ -30,6 +28,10 @@ const char* error_404_title = "Not Found";
 const char* error_404_form = "The requested file was not found on this server.\n";
 const char* error_500_title = "Internal Error";
 const char* error_500_form = "There was an unusual problem serving the requested file.\n";
+
+HttpConn::HttpConn() {}
+
+HttpConn::~HttpConn() {}
 
 void HttpConn::init(int sockfd, const sockaddr_in &addr)
 {
@@ -65,6 +67,10 @@ void HttpConn::my_init() // 初始化解析或响应要保存的信息
     
     send_bytes = 0;
     to_send_bytes = 0;
+
+    bzero(m_readbuffer, READ_BUFFER_SIZE);
+    bzero(m_writebuffer, WRITE_BUFFER_SIZE);
+    bzero(m_real_file, FILEPATH_LEN);
 }
 
 void HttpConn::close_conn() 
@@ -78,6 +84,7 @@ void HttpConn::close_conn()
 
 bool HttpConn::read() // 将数据读入到读缓冲区，解析
 {
+    printf("一次性读完数据！\n");
     // 循环读直到客户端断开
     if(m_read_index >= READ_BUFFER_SIZE) {
         return false;
@@ -99,13 +106,15 @@ bool HttpConn::read() // 将数据读入到读缓冲区，解析
         m_read_index += read_bytes;
     }
     Info("read data is:\n%s", m_readbuffer);
+
     return true;
 }
 
 bool HttpConn::write() // 响应存入到写缓冲区，发送
 {
+    printf("一次性写完数据！\n");
     int temp = 0;
-    if(to_send_bytes == 0) { // 没有要发送的数据了，结束响应
+    if(to_send_bytes <= 0) { // 没有要发送的数据了，结束响应
         epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
         my_init();
         return true;
@@ -128,17 +137,18 @@ bool HttpConn::write() // 响应存入到写缓冲区，发送
         to_send_bytes -= temp; // 更新信息，还剩下多少字节需要发送
         if(send_bytes >= m_iv[0].iov_len) {
             m_iv[0].iov_len = 0;
-            m_iv[1].iov_base = m_file_address + (to_send_bytes - m_write_index);
+            m_iv[1].iov_base = m_file_address + (send_bytes - m_write_index);
             m_iv[1].iov_len = to_send_bytes;
         }
         else {
-            m_iv[0].iov_base = m_writebuffer + to_send_bytes;
+            m_iv[0].iov_base = m_writebuffer + send_bytes;
             m_iv[0].iov_len = m_iv[0].iov_len - temp;
         }
         if(to_send_bytes <= 0) {
             // 发送HTTP响应成功, 根据HTTP请求中的Connection连接状态
             // 来决定是否关闭连接
             free_mmap();
+            epoller->add_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
             if(m_conn_status) {
                 my_init();
                 return true;
@@ -177,11 +187,11 @@ HttpConn::HTTP_CODE HttpConn::parse_request()
     HTTP_CODE request_ret = NO_REQUEST; 
     char* line_data = nullptr;
     while((m_cur_mainstate == CHECK_STATE_CONTENT) && (line_status = LINE_OK) || // 主状态机解析请求体，从状态机解析行成功
-          ((line_status = parse_detail_line()) == LINE_OK)) { // 每次解析一行数据
+         ((line_status = parse_detail_line()) == LINE_OK)) { // 每次解析一行数据
         // 解析到了请求体和一行数据
         line_data = get_linedata(); // 获得一行数据
         m_start_line = m_cur_index; // 更新解析的行首位置
-        printf("got 1 http line data: %s", line_data);
+        Info("got 1 http line data: \n%s", line_data);
 
         switch (m_cur_mainstate) // 主状态机 (有效状态机)
         {
@@ -210,12 +220,11 @@ HttpConn::HTTP_CODE HttpConn::parse_request()
                 if(request_ret == GET_REQUEST) {
                     return do_request();
                 }
-                line_status = LINE_OPEN; // 行不完整
+                line_status = LINE_INCOMPLETE; // 行不完整
                 break;
             }          
             default:
                 return INTERNAL_ERROR;
-                break;
         }
     }
     return NO_REQUEST;
@@ -229,11 +238,11 @@ HttpConn::HTTP_CODE HttpConn::parse_request_line(char* text)
     if(!m_url) {
         return BAD_REQUEST;
     }
-    *(m_url++) = '\0';
+    *m_url++ = '\0';
     // GET\0/index.html HTTP/1.1
 
     char* method = text;
-    if(strcasecmp(method, " GET") == 0) {
+    if(strcasecmp(method, "GET") == 0) {
         m_method = GET; // 得到请求方法
     }
     else {
@@ -244,7 +253,7 @@ HttpConn::HTTP_CODE HttpConn::parse_request_line(char* text)
     if(m_version == nullptr) {
         return BAD_REQUEST;
     }
-    *(m_version++) = '\0';
+    *m_version++ = '\0';
     // m_url: /index.html\0HTTP/1.1
     if(strcasecmp(m_version, "HTTP/1.1") != 0) {
         return BAD_REQUEST;
@@ -280,7 +289,7 @@ HttpConn::HTTP_CODE HttpConn::parse_request_headers(char* text)
         // 192.168.184.10:8888, 此时指针指向'192'的'1'位置
         text += strspn(text, " \t"); // 移动指针到第一个不在这个字符集合中的字符处
         m_hostaddr = text;
-        Info("host_addr:%s", m_hostaddr);
+        Info("host_addr:%s\n", m_hostaddr);
     }
     else if(strncasecmp(text, "Connection:", 11) == 0) { // 获取连接状态
         text += 11;
@@ -288,13 +297,13 @@ HttpConn::HTTP_CODE HttpConn::parse_request_headers(char* text)
         if(strcmp(text, "keep-alive") == 0) {
             m_conn_status = true;
         }
-        Info("http connection status: %d", m_conn_status);
+        Info("http connection status: %d\n", m_conn_status);
     }
     else if(strncasecmp(text, "Content-Length:", 15) == 0) { // 内容长度
         text += 15;
         text += strspn(text, " \t");
         m_content_length = atol(text);
-        Info("content_length: %d", m_content_length);
+        Info("content_length: %d\n", m_content_length);
     }
     else { // 其他，出现未知头部字段
         Info("unknow header %s\n", text);
@@ -323,7 +332,7 @@ HttpConn::LINE_STATUS HttpConn::parse_detail_line() // 解析一行数据报文�
         ch = m_readbuffer[m_cur_index];
         if(ch == '\r') {
             if((m_cur_index + 1) == m_read_index) { // 是下一次要读的位置
-                return LINE_OPEN; // 行不完整
+                return LINE_INCOMPLETE; // 行不完整
             }
             else if(m_readbuffer[m_cur_index + 1] == '\n') {
                 m_readbuffer[m_cur_index++] = '\0'; // '\r'置空
@@ -333,7 +342,7 @@ HttpConn::LINE_STATUS HttpConn::parse_detail_line() // 解析一行数据报文�
             return LINE_BAD; // 行出错
         }
         else if(ch == '\n') { // 已经到行尾了
-            if(m_cur_index > 1 && (m_readbuffer[m_cur_index-1] == '\r')) {
+            if((m_cur_index > 1) && (m_readbuffer[m_cur_index-1] == '\r')) {
                 m_readbuffer[m_cur_index-1] = '\0';
                 m_readbuffer[m_cur_index++] = '\0'; // 当前位置置空后后移
                 return LINE_OK;
@@ -341,7 +350,7 @@ HttpConn::LINE_STATUS HttpConn::parse_detail_line() // 解析一行数据报文�
             return LINE_BAD;
         }
     }
-    return LINE_OPEN; // 数据不完整
+    return LINE_INCOMPLETE; // 数据不完整
 }   
 
 // 当得到一个完整正确的HTTP请求时，我们就分析目标文件的属性
@@ -351,9 +360,10 @@ HttpConn::HTTP_CODE HttpConn::do_request()
 {
     strcpy(m_real_file, web_root_src);
     int len = strlen(web_root_src);
-    if(len < FILEPATH_LEN-1) {
-        strncat(m_real_file, m_url, FILEPATH_LEN - len - 1); // 追加信息，拼接成要访问本地的文件路径
-    }
+//    if(len < FILEPATH_LEN-1) {
+//        strncat(m_real_file, m_url, FILEPATH_LEN - len - 1); // 追加信息，拼接成要访问本地的文件路径
+//    }
+    strncpy(m_real_file + len, m_url, FILEPATH_LEN - len -1);
     Info("the client request file path: %s", m_real_file);
     // 先获取m_real_file文件相关的状态信息，-1失败，0成功
     if(stat(m_real_file, &m_file_status) < 0) {
@@ -408,6 +418,15 @@ bool HttpConn::process_response(HTTP_CODE ret)
             }
             break;
         }
+        case FORBIDDEN_REQUEST:
+        {
+            add_response_statline(403, error_403_title);
+            add_response_headers(strlen(error_403_form));
+            if(!add_response_content(error_403_form)) {
+                return false;
+            }
+            break;
+        }
         case NO_RESOURCE: // 没有该资源(404)
         {
             add_response_statline(404, error_404_title);
@@ -417,15 +436,7 @@ bool HttpConn::process_response(HTTP_CODE ret)
             }
             break;
         }
-        case FORBIDDEN_REQUEST:
-        {
-            add_response_statline(404, error_403_title);
-            add_response_headers(strlen(error_403_form));
-            if(!add_response_content(error_403_form)) {
-                return false;
-            }
-            break;
-        }
+
         case INTERNAL_ERROR: // 内部错误
         {   
             add_response_statline(500, error_500_title);
@@ -483,7 +494,7 @@ bool HttpConn::add_response_statline(int status, const char* title)
 }
 
 // 生成响应头部
-bool HttpConn::add_response_headers(int content_length)
+void HttpConn::add_response_headers(int content_length)
 {
     add_response_contentlen(content_length);
     add_response_contenttype();
@@ -494,13 +505,13 @@ bool HttpConn::add_response_headers(int content_length)
 // 生成响应体
 bool HttpConn::add_response_content(const char* content)
 {
-    add_response_info("%s", content);
+    return add_response_info("%s", content);
 }
 
 // 响应连接状态
 bool HttpConn::add_response_connstatus()
 {
-    return add_response_info("Connection: %s\r\n", (m_conn_status == true) ? "keep-alive" : "close");
+    return add_response_info("Connection: %s\r\n", m_conn_status ? "keep-alive" : "close");
 }
 
 // 生成响应体长度

@@ -8,7 +8,7 @@
 #include "http_conn.h"
 #include "epoller.h"
 
-#define MAX_CLIENT_FD 65535 // 可连接的最大客户端数量
+#define MAX_CLIENT_FD 65536 // 可连接的最大客户端数量
 #define MAX_LISTEN_EVENT_NUM 10000 // 一次监听时最大的事件数
 
 // Server的处理部分
@@ -17,7 +17,7 @@
 
 class WebServer {
 public:
-    WebServer();
+    WebServer(int Port);
     ~WebServer();
 
     void log_init();
@@ -27,6 +27,8 @@ public:
     // 错误处理
     int check_error(int ret, const char* format);
     void handle_sig(int sig, void(handler)(int));
+private:
+    int serverPort;
 
 private:
     int listen_fd;
@@ -36,7 +38,7 @@ private:
     std::unique_ptr<Epoller> epoller;
 
     epoll_event events[MAX_LISTEN_EVENT_NUM]; // 创建主线程的epoll事件数组
-    HttpConn* client_info = new HttpConn[MAX_CLIENT_FD]; // 保存客户端信息的数组
+    HttpConn* client_info; // 保存客户端信息的数组
 };
 
 #endif // TINYWEBSERVER_WEBSERVER_H

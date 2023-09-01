@@ -2,6 +2,7 @@
 #include <sys/epoll.h>
 #include <unistd.h> // close()
 #include <fcntl.h>
+#include <cstring>
 
 #include "logger.h"
 using namespace ariesfun::log;
@@ -9,6 +10,7 @@ using namespace ariesfun::log;
 void Epoller::add_fd(int epollfd, int fd, bool one_shot)
 {
     epoll_event event;
+    memset(&event, 0, sizeof(event)); // 初始化event结构体
     event.data.fd = fd;
     event.events = EPOLLIN | EPOLLRDHUP; //  默认用水平触发, EPOLLET是改为边沿触发
     if(one_shot) {
@@ -34,6 +36,8 @@ void Epoller::remove_fd(int epollfd, int fd)
 void Epoller::modify_fd(int epollfd, int fd, int ev)
 {
     epoll_event event;
+    memset(&event, 0, sizeof(event)); // 初始化event结构体
+    event.data.fd = fd;
     event.events = ev | EPOLLET | EPOLLONESHOT | EPOLLRDHUP; // 添加注册事件
     int ret = epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &event); // 重置event事件
     if(ret == -1) {
