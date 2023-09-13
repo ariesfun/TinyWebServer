@@ -10,19 +10,19 @@ namespace ariesfun{
 namespace log{
 
 #define Debug(format, ...) \
-    Logger::getInstance()->log_write(Logger::DEBUG, basename(__FILE__), __LINE__, __FUNCTION__, format, ##__VA_ARGS__);
+    Logger::getInstance()->log_write(Logger::DEBUG, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__);
 
 #define Info(format, ...) \
-    Logger::getInstance()->log_write(Logger::INFO, basename(__FILE__), __LINE__, __FUNCTION__, format, ##__VA_ARGS__);
+    Logger::getInstance()->log_write(Logger::INFO, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__);
 
 #define Warn(format, ...) \
-    Logger::getInstance()->log_write(Logger::WARN, basename(__FILE__), __LINE__, __FUNCTION__, format, ##__VA_ARGS__);
+    Logger::getInstance()->log_write(Logger::WARN, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__);
 
 #define Error(format, ...) \
-    Logger::getInstance()->log_write(Logger::ERROR, basename(__FILE__), __LINE__, __FUNCTION__, format, ##__VA_ARGS__);
+    Logger::getInstance()->log_write(Logger::ERROR, __FILE__, __LINE__, __FUNCTION__, format, ##__VA_ARGS__);
 
 #define Fatal(format, ...) \
-    Logger::getInstance()->log_write(Logger::FATAL, basename(__FILE__), __LINE__, __FUNCTION__,format, ##__VA_ARGS__);
+    Logger::getInstance()->log_write(Logger::FATAL, __FILE__, __LINE__, __FUNCTION__,format, ##__VA_ARGS__);
 
 class Logger {
 public:

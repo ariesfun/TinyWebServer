@@ -74,10 +74,14 @@ void Logger::log_write(Level level, const char* file, int line, const char* func
     }
     const std::string timestamp = getDatewithTime();
     char ftm[] = "[%s] [%s] [%s:%d] (func:%s) <thread-id:%lu> ";
-    int size = snprintf(nullptr, 0, ftm, timestamp.c_str(), level_str[level], file, line, func, getThreadId());
+    const char* file_name = strrchr(file, '/');
+    if(file_name) {
+        ++file_name;
+    }
+    int size = snprintf(nullptr, 0, ftm, timestamp.c_str(), level_str[level], file_name, line, func, getThreadId());
     if(size > 0) { // size是ftm串的长度
         char* buffer = new char[size + 1];
-        snprintf(buffer, size + 1, ftm, timestamp.c_str(), level_str[level], file, line, func, getThreadId());
+        snprintf(buffer, size + 1, ftm, timestamp.c_str(), level_str[level], file_name, line, func, getThreadId());
         buffer[size] = '\0';
         m_fout << buffer;
         m_cursize += size;

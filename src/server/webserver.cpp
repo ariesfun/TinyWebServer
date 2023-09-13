@@ -76,15 +76,15 @@ void WebServer::start()
         break;
     }
     // 添加一个非活跃连接的定时事件, 重复触发
-    const int INACTIVE_THRESHOLD = 20 * 1000;
-    m_timer->AddTimer(4000, -1, [&](const TimerNode &node) {
+    const int INACTIVE_THRESHOLD = 10 * 1000;
+    m_timer->AddTimer(2000, -1, [&](const TimerNode &node) {
          // 处理超时断开的功能
         for (int sockfd : active_clients) {
             time_t now = Timer::GetTick();
             time_t last_activetime = client_info[sockfd].m_active_time;
             if ((client_info[sockfd].client_isvalid()) && (last_activetime > 0) && (now - last_activetime > INACTIVE_THRESHOLD)) {
                 sockets_to_remove.push_back(sockfd);
-                std::cout << "用户超时连接，已经断开！" << std::endl;
+                printf("[用户: %d] 超时连接，已经断开！\n", sockfd);
                 Info("\nTimeout !!! \nConnection closed due to inactivity! user:%d ,fd info: %d.\n", HttpConn::m_client_cnt, sockfd); // 增加日志记录
             }
         }
