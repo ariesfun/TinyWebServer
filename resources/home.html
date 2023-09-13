@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页</title>
+    <style>
+        body {
+            background-color: #f0f0f0; /* 设置整个页面的背景颜色 */
+            font-family: Arial, sans-serif; /* 设置字体 */
+        }
+        
+        .login-container {
+            width: 300px; /* 设置登录容器的宽度 */
+            margin: 0 auto; /* 居中对齐登录容器 */
+            margin-top: 100px; /* 设置登录容器与页面顶部的距离 */
+            background-color: #fff; /* 设置登录容器的背景颜色 */
+            padding: 20px; /* 设置内边距，增加内部空间 */
+            border-radius: 5px; /* 设置边框圆角 */
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2); /* 添加阴影效果 */
+        }
+
+        .login-container h1 {
+            text-align: center; /* 文字居中对齐 */
+        }
+
+        .login-form {
+            text-align: left; /* 文字居左对齐 */
+        }
+
+        .login-form label {
+            display: block; /* 让标签占据一行 */
+            margin-bottom: 5px; /* 设置下方间距 */
+        }
+
+        .login-form input[type="text"],
+        .login-form input[type="password"] {
+            width: 95%; /* 设置输入框宽度占满容器 */
+            padding: 10px; /* 设置内边距增加空间 */
+            margin-bottom: 10px; /* 设置下方间距 */
+            border: 1px solid #ccc; /* 设置边框 */
+            border-radius: 3px; /* 设置边框圆角 */
+        }
+        
+        .login-buttons {
+            display: flex; /* 将按钮放置在同一行 */
+            justify-content: space-between; /* 水平间距平均分布 */
+            align-items: center; /* 垂直居中对齐 */
+        }
+
+        .login-buttons input[type="submit"] {
+            width: 48%; /* 设置按钮宽度 */
+            padding: 10px; /* 设置内边距增加空间 */
+            background-color: #007bff; /* 设置按钮背景颜色 */
+            color: #fff; /* 设置文字颜色 */
+            border: none; /* 去除按钮边框 */
+            border-radius: 3px; /* 设置按钮圆角 */
+            cursor: pointer; /* 添加手型光标 */
+        }
+
+        .login-buttons input[type="submit"]:hover {
+            background-color: #0056b3; /* 鼠标悬停时的背景颜色 */
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>欢迎访问本站~~~</h1>
+        <div class="login-form">
+            <form action="login" method="post">
+                <label for="username">用户名：</label>
+                <input type="text" id="username" name="username"><br>
+                <label for="password">密码：</label>
+                <input type="password" id="password" name="password"><br>
+                <span id="msg" style="font-size: 12px; color: blue"></span><br>
+                <div class="login-buttons">
+                    <input type="submit" value="登录">
+                    <input type="submit" onclick="" value="注册">
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
