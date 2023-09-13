@@ -5,14 +5,14 @@
 #include <exception>
 #include <semaphore.h>
 
-// 保证线程同步机制（互斥量类、条件变量类、互斥锁类）
+// 保证线程同步机制（互斥量类、条件变量类、信号量类）
 
 // 互斥锁类
 class Locker {
 public:
     Locker() {
         if(pthread_mutex_init(&m_mutex, nullptr) != 0) {
-            throw std::exception();
+            throw std::exception(); // 抛出异常
         }
     }
     ~Locker() {
@@ -47,8 +47,8 @@ public:
         pthread_cond_destroy(&m_condition);
     }
 
-    // 当前线程阻塞，直到另一个线程通过调用
-    // pthread_cond_signal或pthread_cond_broadcast 来唤醒等待在条件变量上的线程
+    // 当前线程阻塞，直到另一个线程发来通知时
+    // 调用pthread_cond_signal或pthread_cond_broadcast 来唤醒等待在条件变量上的线程
     // 如果等待成功（即线程被唤醒），函数返回true，否则返回false
     bool wait(pthread_mutex_t* mutex) {
         return pthread_cond_wait(&m_condition, mutex) == 0;
