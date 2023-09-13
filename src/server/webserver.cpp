@@ -23,7 +23,7 @@ void WebServer::server_init()
     // 日志类配置初始化
     Logger::getInstance()->open("../log_info/LOG_INFO.log");
     Logger::getInstance()->log_setlevel(Logger::INFO);
-    Logger::getInstance()->log_maxsize(10240);
+    Logger::getInstance()->log_maxsize(102400);
     Info("-------------INIT-----------------");
     Info("--------SERVER STARTING-----------");
     Info("----------------------------------");
@@ -51,11 +51,14 @@ void WebServer::server_init()
     check_error(listen(listen_fd, 5),
                 "start listen socket failed!");
 
-    epoll_fd = check_error(epoll_create(5),
+    epoll_fd = check_error(epoll_create(1),
                            "epoll_create call failed!");
     // 将监听的fd放入epoll_fd中
     epoller->add_fd(epoll_fd, listen_fd, false);
     HttpConn::m_http_epollfd = epoll_fd;
+
+    // 处理断开事件
+    handle_sig(SIGPIPE, SIG_IGN); // 处理关闭连接时的SIGPIPE信号
 }
 
 void WebServer::start()
@@ -63,12 +66,10 @@ void WebServer::start()
     server_init();
     while(true) { // 循环检测是否有连接事件
     int num = epoll_wait(epoll_fd, events, MAX_LISTEN_EVENT_NUM, -1); // 返回检测到的事件数量
-    if(num < 0 && (errno != EINTR)) { // 调用失败，并且前一个调用信号中断
+    if((num < 0) && (errno != EINTR)) { // 调用失败，并且前一个调用信号中断
         Error("epoll_wait call failed!");
         break;
     }
-    // 处理断开事件
-    handle_sig(SIGPIPE, SIG_IGN); // 处理关闭连接时的SIGPIPE信号
     // 遍历事件数组
     for(int i = 0; i < num; i++) {
         int sockfd = events[i].data.fd; // 表示该事件与哪个文件描述符相关联
