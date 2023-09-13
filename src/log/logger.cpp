@@ -83,7 +83,7 @@ void Logger::log_write(Level level, const char* file, int line, const char* func
         char* buffer = new char[size + 1];
         snprintf(buffer, size + 1, ftm, timestamp.c_str(), level_str[level], file_name, line, func, getThreadId());
         buffer[size] = '\0';
-        m_fout << buffer;
+        m_fout << '\n' << buffer ;
         m_cursize += size;
         delete[] buffer;
     }
@@ -97,7 +97,7 @@ void Logger::log_write(Level level, const char* file, int line, const char* func
         va_start(arg_ptr, format);
         vsnprintf(arg_content, size + 1, format, arg_ptr);
         va_end(arg_ptr);
-        m_fout << arg_content;
+        m_fout << '\n' << arg_content;
         m_cursize += size;
         delete[] arg_content;
     }

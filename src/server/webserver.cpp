@@ -26,7 +26,7 @@ void WebServer::log_init()
     Logger::getInstance()->open("../log_info/LOG_INFO.log");
     Logger::getInstance()->log_setlevel(Logger::INFO);
     Logger::getInstance()->log_maxsize(102400);
-    Info("\n-------------INIT-----------------\n--------SERVER LOG STARTING-------\n----------------------------------\n");
+    Info("-------------INIT-----------------\n--------SERVER LOG STARTING-------\n----------------------------------");
 }
 
 void WebServer::server_init()
@@ -38,7 +38,7 @@ void WebServer::server_init()
     m_timer = std::make_unique<Timer>(); // 初始化定时器
 
     listen_fd = check_error(socket(PF_INET, SOCK_STREAM, 0),
-                           "\ncreate listen sockfd failed!\n"); // 创建监听fd
+                           "create listen sockfd failed!"); // 创建监听fd
 
     // 绑定可以连接的用户信息
     struct sockaddr_in sock_address;
@@ -48,16 +48,16 @@ void WebServer::server_init()
 
     int reuse = 1; // 设置端口复用
     check_error(setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)),
-               "\nsetsockopt failed!\n");
+               "setsockopt failed!");
 
     check_error(bind(listen_fd, (struct sockaddr*)&sock_address, sizeof(sock_address)),
-               "\nbind listen sockfd failed!\n");
+               "bind listen sockfd failed!");
 
     check_error(listen(listen_fd, 5),
-               "\nstart listen socket failed!\n");
+               "start listen socket failed!");
 
     epoll_fd = check_error(epoll_create(1),
-                          "\nepoll_create call failed!\n");
+                          "epoll_create call failed!");
     // 将监听的fd放入epoll_fd中
     m_epoller->add_fd(epoll_fd, listen_fd, false);
     HttpConn::m_http_epollfd = epoll_fd;
@@ -72,20 +72,20 @@ void WebServer::start()
     while(true) { // 循环检测是否有连接事件
     int num = epoll_wait(epoll_fd, ev_res, MAX_LISTEN_EVENT_NUM, m_timer->TimeToSleep()); // 返回检测到的事件数量，并设置为阻塞等待
     if((num < 0) && (errno != EINTR)) { // 调用失败，并且前一个调用信号中断
-        Error("\nepoll_wait call failed!\n");
+        Error("epoll_wait call failed!");
         break;
     }
     // 添加一个非活跃连接的定时事件, 重复触发
     const int INACTIVE_THRESHOLD = 10 * 1000;
-    m_timer->AddTimer(2000, -1, [&](const TimerNode &node) {
+    m_timer->AddTimer(1000, -1, [&](const TimerNode &node) {
          // 处理超时断开的功能
         for (int sockfd : active_clients) {
             time_t now = Timer::GetTick();
             time_t last_activetime = client_info[sockfd].m_active_time;
             if ((client_info[sockfd].client_isvalid()) && (last_activetime > 0) && (now - last_activetime > INACTIVE_THRESHOLD)) {
                 sockets_to_remove.push_back(sockfd);
-                printf("[用户: %d] 超时连接，已经断开！\n", sockfd);
-                Info("\nTimeout !!! \nConnection closed due to inactivity! user:%d ,fd info: %d.\n", HttpConn::m_client_cnt, sockfd); // 增加日志记录
+                printf("[用户fd: %d] 超时连接，已经断开！\n", sockfd);
+                Info("Timeout !!! \nConnection closed due to inactivity! user:%d ,fd info: %d.", HttpConn::m_client_cnt, sockfd); // 增加日志记录
             }
         }
 
@@ -105,11 +105,11 @@ void WebServer::start()
             socklen_t client_addr_len = sizeof(client_addr); // 转换类型
             int connfd = accept(listen_fd, (struct sockaddr*)&client_addr, &client_addr_len); // 建立连接
             if(connfd == -1) {
-                Error("\nsocket accept client failed!\n");
+                Error("socket accept client failed!");
                 continue;
             }
             if(HttpConn::m_client_cnt >= MAX_CLIENT_FD) {
-                Info("\nTo Client: the current client too much, server is busy!\n"); // 要返回给客户端
+                Info("To Client: the current client too much, server is busy!"); // 要返回给客户端
                 close(connfd);
                 continue;
             }
@@ -149,7 +149,9 @@ void WebServer::start()
 int WebServer::check_error(int ret, const char* format) // 进行错误检查
 {
     if(ret == -1) { // linux系统IO函数失败会返回-1
+        int saved_errno = errno;
         Error(format);
+        Error("the check_error detail: %s", strerror(saved_errno));
     }
     return ret;
 }

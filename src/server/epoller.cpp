@@ -17,7 +17,7 @@ void Epoller::add_fd(int epollfd, int fd, bool one_shot)
     }
     int ret = epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &event);
     if(ret == -1) {
-        Error("\nadd event failed!\n")
+        Error("add event failed!")
     }
     set_unblocking(fd);
 }
@@ -27,12 +27,12 @@ void Epoller::remove_fd(int epollfd, int fd)
     int ret = epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, nullptr);
     if(ret == -1) {
         int saved_errno = errno;
-        Error("\nremove event failed: %s\n", strerror(saved_errno));
+        Error("remove event failed: %s", strerror(saved_errno));
     }
     ret = close(fd);
     if(ret == -1) {
         int saved_errno = errno;
-        Error("\nclose fd failed: %s\n", strerror(saved_errno));
+        Error("close fd failed: %s", strerror(saved_errno));
     }
 }
 
@@ -44,7 +44,7 @@ void Epoller::modify_fd(int epollfd, int fd, int ev)
     event.events = ev | EPOLLET | EPOLLONESHOT | EPOLLRDHUP; // 添加注册事件
     int ret = epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &event); // 重置event事件
     if(ret == -1) {
-        Error("\nmodify event failed!\n");
+        Error("modify event failed!");
     }
 }
 
@@ -53,12 +53,12 @@ void Epoller::set_unblocking(int fd) // 设置fd为非阻塞状态
     // 获取fd状态
     int oldflag = fcntl(fd, F_GETFL);
     if(oldflag == -1) {
-        Error("\nget fd status failed!\n");
+        Error("get fd status failed!");
     }
     // 修改状态
     int ret = fcntl(fd, F_SETFL, oldflag | O_NONBLOCK);
     if(ret == -1) {
-        Error("\nedit fd status failed!\n");
+        Error("edit fd status failed!");
     }
 }
                                         

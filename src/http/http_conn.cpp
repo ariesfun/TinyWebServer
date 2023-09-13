@@ -113,7 +113,7 @@ bool HttpConn::read() // 将数据读入到读缓冲区，解析
         }
         m_read_index += read_bytes;
     }
-    Info("\nread data is:\n%s\n", m_readbuffer);
+    Info("read data is:\n%s", m_readbuffer);
 
     return true;
 }
@@ -197,7 +197,7 @@ HttpConn::HTTP_CODE HttpConn::parse_request()
         // 解析到了请求体和一行数据
         line_data = get_linedata(); // 获得一行数据
         m_start_line = m_cur_index; // 更新解析的行首位置
-        Info("\ngot 1 http line data: \n%s\n", line_data);
+        Info("got 1 http line data: \n%s", line_data);
 
         switch (m_cur_mainstate) // 主状态机 (有效状态机)
         {
@@ -297,7 +297,7 @@ HttpConn::HTTP_CODE HttpConn::parse_request_headers(char* text)
         // 192.168.184.10:8888, 此时指针指向'192'的'1'位置
         text += strspn(text, " \t"); // 移动指针到第一个不在这个字符集合中的字符处
         m_hostaddr = text;
-        Info("\nhost_addr:%s\n", m_hostaddr);
+        Info("host_addr:%s\n", m_hostaddr);
     }
     else if(strncasecmp(text, "Connection:", 11) == 0) { // 获取连接状态
         text += 11;
@@ -305,16 +305,16 @@ HttpConn::HTTP_CODE HttpConn::parse_request_headers(char* text)
         if(strcasecmp(text, "keep-alive") == 0) {
             m_conn_status = true; //保持连接
         }
-        Info("\nhttp connection status: %d\n", m_conn_status);
+        Info("http connection status: %d", m_conn_status);
     }
     else if(strncasecmp(text, "Content-Length:", 15) == 0) { // 内容长度
         text += 15;
         text += strspn(text, " \t");
         m_content_length = atol(text);
-        Info("\ncontent_length: %d\n", m_content_length);
+        Info("content_length: %d", m_content_length);
     }
     else { // 其他，出现未知头部字段
-        Info("\nunknow header %s\n", text);
+        Info("unknow header %s", text);
     }
     return NO_REQUEST;
 }
@@ -371,7 +371,7 @@ HttpConn::HTTP_CODE HttpConn::do_request()
     if(len < FILEPATH_LEN-1) {
         strncat(m_real_file, m_url, FILEPATH_LEN - len - 1); // 追加信息，拼接成要访问本地的文件路径
     }
-    Info("\nthe client request file path: %s\n", m_real_file);
+    Info("the client request file path: %s", m_real_file);
     // 先获取m_real_file文件相关的状态信息，-1失败，0成功
     if(stat(m_real_file, &m_file_status) < 0) {
         return NO_RESOURCE;
