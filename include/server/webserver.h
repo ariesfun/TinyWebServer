@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <sys/epoll.h>
+#include <string>
 #include "locker.h"
 #include "thread_pool.h"
 #include "http_conn.h"
@@ -17,7 +18,7 @@
 
 class WebServer {
 public:
-    WebServer(int Port);
+    WebServer(int port, int thread_num, int thread_request_num);
     ~WebServer();
 
     void log_init();
@@ -27,8 +28,6 @@ public:
     // 错误处理
     int check_error(int ret, const char* format);
     void handle_sig(int sig, void(handler)(int));
-private:
-    int serverPort;
 
 private:
     int listen_fd;
@@ -39,6 +38,17 @@ private:
 
     epoll_event events[MAX_LISTEN_EVENT_NUM]; // 创建主线程的epoll事件数组
     HttpConn* client_info; // 保存客户端信息的数组
+
+private:
+    // 服务器的一些配置信息
+    int serverPort;
+    int threadpoolNum;
+    int threadpoolRequest;
+
+    // std::string mysqlHost;
+    // std::string mysqlUser;
+    // std::string mysqlPwd;
+    // std::string mysqlDatabase;
 };
 
 #endif // TINYWEBSERVER_WEBSERVER_H

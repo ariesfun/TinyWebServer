@@ -528,6 +528,7 @@ bool HttpConn::add_response_contentlen(int content_length)
 // 生成响应体类型
 bool HttpConn::add_response_contenttype()
 {
+    // 需要根据用户的请求，来指定响应体的类型
     return add_response_info("Content-Type: %s\r\n", "text/html");
 }
 

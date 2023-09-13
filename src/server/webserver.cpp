@@ -13,27 +13,31 @@
 #include "logger.h"
 using namespace ariesfun::log;
 
-WebServer::WebServer(int Port)
+WebServer::WebServer(int port, int thread_num, int thread_request_num)
 {
-    serverPort = Port;
+    serverPort = port;
+    threadpoolNum = thread_num;
+    threadpoolRequest = thread_request_num;
 }
 
-void WebServer::server_init()
+void WebServer::log_init() 
 {
     // 日志类配置初始化
     Logger::getInstance()->open("../log_info/LOG_INFO.log");
     Logger::getInstance()->log_setlevel(Logger::INFO);
     Logger::getInstance()->log_maxsize(102400);
-    Info("-------------INIT-----------------");
-    Info("--------SERVER STARTING-----------");
-    Info("----------------------------------");
+    Info("\n-------------INIT-----------------\n--------SERVER LOG STARTING-------\n----------------------------------\n");
+}
 
+void WebServer::server_init()
+{   
+    log_init();
     WebServer::client_info = new HttpConn[MAX_CLIENT_FD];
     memset(events, 0, sizeof(events)); // 将整个数组清零
-    t_pool = std::make_unique<ThreadPool<HttpConn>>(8, 10000); // 初始化线程池
+    t_pool = std::make_unique<ThreadPool<HttpConn>>(threadpoolNum, threadpoolRequest); // 初始化线程池
 
     listen_fd = check_error(socket(PF_INET, SOCK_STREAM, 0),
-                            "create listen sockfd failed!"); // 创建监听fd
+                           "\ncreate listen sockfd failed!\n"); // 创建监听fd
 
     // 绑定可以连接的用户信息
     struct sockaddr_in sock_address;
@@ -43,16 +47,16 @@ void WebServer::server_init()
 
     int reuse = 1; // 设置端口复用
     check_error(setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)),
-                "setsockopt failed!");
+               "\nsetsockopt failed!\n");
 
     check_error(bind(listen_fd, (struct sockaddr*)&sock_address, sizeof(sock_address)),
-                "bind listen sockfd failed!");
+               "\nbind listen sockfd failed!\n");
 
     check_error(listen(listen_fd, 5),
-                "start listen socket failed!");
+               "\nstart listen socket failed!\n");
 
     epoll_fd = check_error(epoll_create(1),
-                           "epoll_create call failed!");
+                          "\nepoll_create call failed!\n");
     // 将监听的fd放入epoll_fd中
     epoller->add_fd(epoll_fd, listen_fd, false);
     HttpConn::m_http_epollfd = epoll_fd;
@@ -67,7 +71,7 @@ void WebServer::start()
     while(true) { // 循环检测是否有连接事件
     int num = epoll_wait(epoll_fd, events, MAX_LISTEN_EVENT_NUM, -1); // 返回检测到的事件数量
     if((num < 0) && (errno != EINTR)) { // 调用失败，并且前一个调用信号中断
-        Error("epoll_wait call failed!");
+        Error("\nepoll_wait call failed!\n");
         break;
     }
     // 遍历事件数组
@@ -78,17 +82,17 @@ void WebServer::start()
             socklen_t client_addr_len = sizeof(client_addr); // 转换类型
             int connfd = accept(listen_fd, (struct sockaddr*)&client_addr, &client_addr_len); // 建立连接
             if(connfd == -1) {
-                Error("socket accept client failed!");
+                Error("\nsocket accept client failed!\n");
                 continue;
             }
             if(HttpConn::m_client_cnt >= MAX_CLIENT_FD) {
-                Info("To Client: the current client too much, server is busy!"); // 要返回给客户端
+                Info("\nTo Client: the current client too much, server is busy!\n"); // 要返回给客户端
                 close(connfd);
                 continue;
             }
             client_info[connfd].init(connfd, client_addr);
         }
-        else if(events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) { // 对方异常断开或者错误等事件
+        else if(events[i].events & (EPOLLRDHUP| EPOLLET | EPOLLHUP | EPOLLERR)) { // 对方异常断开或者错误等事件
             client_info[sockfd].close_conn(); // 关闭连接
         }
         else if(events[i].events & EPOLLIN) { // 判断是否有读事件发生，一次性读完数据

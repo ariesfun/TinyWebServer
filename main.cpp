@@ -2,7 +2,7 @@
 
 int main()
 {
-    WebServer server(7878);
+    WebServer server(7878, 8, 100000);
     server.start();
 
     return 0;

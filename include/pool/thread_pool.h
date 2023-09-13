@@ -51,9 +51,8 @@ ThreadPool<T>::ThreadPool(int thread_num, int max_requests) :
         throw std::exception();
     }
     // 创建指定的线程数，并将它们设置为脱离线程，以便让他们自己释放资源
+    Info("\nthe total create thread num is %d\n", m_thread_num);
     for(int i = 0; i < thread_num; i++) {
-        Info("create the %dth thread", i);
-
         // c++的线程执行函数worker，必须是静态函数
         // 第三个参数是一个指向函数的指针，该函数将在新线程中执行
         // 在这里，worker 是一个函数指针，表示新线程将执行名为 worker 的函数
