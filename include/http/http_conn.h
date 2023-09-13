@@ -36,7 +36,9 @@ public:
     HttpConn();
     ~HttpConn();
 
-    void init(int sockfd, const sockaddr_in &addr); // 初始化当前建立连接的客户端信息
+    void init(int sockfd, const sockaddr_in &addr, time_t tick); // 初始化当前建立连接的客户端信息
+    bool client_isvalid(); 
+    
     void close_conn();  // 关闭已建立的连接
 
     bool read(); // 一次性读写数据
@@ -45,6 +47,7 @@ public:
 
     static int m_http_epollfd; // 共享数据，所有socket上的事件都被注册到一个epoll对象中
     static int m_client_cnt; // 当前连接的用户数量
+    static time_t m_active_time; // 记录用户活跃时间
 
     static const int READ_BUFFER_SIZE = 2048; // 读写缓冲区大小  
     static const int WRITE_BUFFER_SIZE = 2048;
@@ -57,7 +60,8 @@ private:
 private:
     int m_http_sockfd; // 进行socket通信的fd和地址
     sockaddr_in m_http_addr;
-    std::unique_ptr<Epoller> epoller; // epool指针对象
+    bool clientinfo_is_valid = false;
+    std::unique_ptr<Epoller> m_epoller; // epool指针对象
 
     char m_readbuffer[READ_BUFFER_SIZE];
     int m_read_index; // 标记读入数据的最后一个字节的下一个位置

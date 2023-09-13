@@ -24,11 +24,16 @@ void Epoller::add_fd(int epollfd, int fd, bool one_shot)
 
 void Epoller::remove_fd(int epollfd, int fd)
 {
-    int ret = epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, 0);
+    int ret = epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, nullptr);
     if(ret == -1) {
-        Error("\nremove event failed!\n");
+        int saved_errno = errno;
+        Error("\nremove event failed: %s\n", strerror(saved_errno));
     }
-    close(fd);
+    ret = close(fd);
+    if(ret == -1) {
+        int saved_errno = errno;
+        Error("\nclose fd failed: %s\n", strerror(saved_errno));
+    }
 }
 
 // 重置socket上的EPOLLONESHOT事件，以确保下一次可读时，EPOLLIN事件能被触发

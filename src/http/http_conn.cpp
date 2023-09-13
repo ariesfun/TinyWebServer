@@ -14,6 +14,7 @@ using namespace ariesfun::log;
 
 int HttpConn::m_http_epollfd = -1;
 int HttpConn::m_client_cnt = 0;
+time_t HttpConn::m_active_time = 0;
 
 // 网站资源根目录
 const char* web_root_src = "/home/ariesfun/Resume_Projects/TinyWebServer/resources";
@@ -33,17 +34,19 @@ HttpConn::HttpConn() {}
 
 HttpConn::~HttpConn() {}
 
-void HttpConn::init(int sockfd, const sockaddr_in &addr)
+void HttpConn::init(int sockfd, const sockaddr_in &addr, time_t tick)
 {
     m_http_sockfd = sockfd; // 保存当前连接的客户端信息
     m_http_addr = addr;
+    m_active_time = tick;
+    clientinfo_is_valid = true;
     int reuse = 1; // 设置端口复用
     int ret = setsockopt(m_http_sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
     if(ret == -1) {
         Error("setsockopt oprate error!");
     }
     // proactor模式，先让HttpConn类来处理
-    epoller->add_fd(m_http_epollfd, sockfd, true);
+    m_epoller->add_fd(m_http_epollfd, sockfd, true);
     m_client_cnt++;
     my_init();
 }
@@ -73,10 +76,16 @@ void HttpConn::my_init() // 初始化解析或响应要保存的信息
     bzero(m_real_file, FILEPATH_LEN);
 }
 
+bool HttpConn::client_isvalid() 
+{
+    return clientinfo_is_valid;
+}
+
 void HttpConn::close_conn() 
 {
     if(m_http_sockfd != -1) {
-        epoller->remove_fd(m_http_epollfd, m_http_sockfd);
+        m_epoller->remove_fd(m_http_epollfd, m_http_sockfd);
+        clientinfo_is_valid = false;
         m_http_sockfd = -1;
         m_client_cnt--;
     }
@@ -113,7 +122,7 @@ bool HttpConn::write() // 将响应一次性存入到写缓冲区，发送
 {
     int temp = 0;
     if(to_send_bytes == 0) { // 没有要发送的数据了，结束响应
-        epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
+        m_epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
         my_init();
         return true;
     }
@@ -125,7 +134,7 @@ bool HttpConn::write() // 将响应一次性存入到写缓冲区，发送
             // 若TCP缓冲没有空间，则等待下一轮EPOLLOUT事件
             // 此时虽无法立即收到该客户端的下一个请求，但可以保证连接的稳定性
             if(errno == EAGAIN) { // 修改epoll监听事件来等待下一次写事件
-                epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLOUT);
+                m_epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLOUT);
                 return true;
             }
             free_mmap();
@@ -145,7 +154,7 @@ bool HttpConn::write() // 将响应一次性存入到写缓冲区，发送
         // 数据已经发送完毕
         if(to_send_bytes <= 0) {
             free_mmap(); // 重置epolloneshot事件
-            epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
+            m_epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
             if(m_conn_status) { // 请求为长连接
                 my_init();
                 return true;
@@ -163,7 +172,7 @@ void HttpConn::start_process()
     // 1.解析HTTP请求，读取数据(进行业务的逻辑处理)
     HTTP_CODE read_ret = parse_request(); // 根据不同状态来处理业务，状态会发生转移
     if(read_ret == NO_REQUEST) { // 请问不完整
-        epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
+        m_epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
         return;
     }
 
@@ -174,7 +183,7 @@ void HttpConn::start_process()
     }
 
     // 3.返回数据给客户端
-    epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLOUT);
+    m_epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLOUT);
 }
 
 // 主状态机(有限状态机)，解析请求主要是读数据操作

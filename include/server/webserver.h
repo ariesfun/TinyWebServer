@@ -4,6 +4,7 @@
 #include <memory>
 #include <sys/epoll.h>
 #include <string>
+#include <vector>
 #include "locker.h"
 #include "thread_pool.h"
 #include "http_conn.h"
@@ -11,6 +12,9 @@
 
 #define MAX_CLIENT_FD 65536 // 可连接的最大客户端数量
 #define MAX_LISTEN_EVENT_NUM 10000 // 一次监听时最大的事件数
+
+#include "timer.h"
+using namespace ariesfun::timer;
 
 // Server的处理部分
 // 服务器模拟的是Proactor异步网络模式
@@ -33,11 +37,14 @@ private:
     int listen_fd;
     int epoll_fd;
 
-    std::unique_ptr<ThreadPool<HttpConn>> t_pool; // 初始化线程池，处理的是http连接任务
-    std::unique_ptr<Epoller> epoller;
+    std::unique_ptr<ThreadPool<HttpConn>> m_tpool; // 初始化线程池，处理的是http连接任务
+    std::unique_ptr<Epoller> m_epoller;
+    std::unique_ptr<Timer> m_timer;
 
-    epoll_event events[MAX_LISTEN_EVENT_NUM]; // 创建主线程的epoll事件数组
+    epoll_event ev_res[MAX_LISTEN_EVENT_NUM]; // 创建主线程的epoll事件数组
     HttpConn* client_info; // 保存客户端信息的数组
+    std::set<int> active_clients; // 保存目前活跃的客户端信息
+    std::vector<int> sockets_to_remove;
 
 private:
     // 服务器的一些配置信息
