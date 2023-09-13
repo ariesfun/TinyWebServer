@@ -16,7 +16,7 @@ int HttpConn::m_http_epollfd = -1;
 int HttpConn::m_client_cnt = 0;
 
 // 网站资源根目录
-const char* web_root_src = "/mnt/e/CPP ResumeProjects/TinyWebServer/resources";
+const char* web_root_src = "/home/ariesfun/Resume_Projects/TinyWebServer/resources";
 
 // 生产HTTP响应的一些状态信息
 const char* ok_200_title = "OK";
@@ -25,7 +25,7 @@ const char* error_400_form = "Your request has bad syntax or is inherently impos
 const char* error_403_title = "Forbidden";
 const char* error_403_form = "You do not have permission to get file from this server.\n";
 const char* error_404_title = "Not Found";
-const char* error_404_form = "The requested file was not found on this server.\n";
+const char* error_404_form = "404 error! \nThe requested file was not found on this server.\n";
 const char* error_500_title = "Internal Error";
 const char* error_500_form = "There was an unusual problem serving the requested file.\n";
 
@@ -84,7 +84,6 @@ void HttpConn::close_conn()
 
 bool HttpConn::read() // 将数据读入到读缓冲区，解析
 {
-    printf("一次性读完数据！\n");
     // 循环读直到客户端断开
     if(m_read_index >= READ_BUFFER_SIZE) {
         return false;
@@ -105,25 +104,24 @@ bool HttpConn::read() // 将数据读入到读缓冲区，解析
         }
         m_read_index += read_bytes;
     }
-    Info("read data is:\n%s", m_readbuffer);
+    Info("\nread data is:\n%s\n", m_readbuffer);
 
     return true;
 }
 
-bool HttpConn::write() // 响应存入到写缓冲区，发送
+bool HttpConn::write() // 将响应一次性存入到写缓冲区，发送
 {
-    printf("一次性写完数据！\n");
     int temp = 0;
-    if(to_send_bytes <= 0) { // 没有要发送的数据了，结束响应
+    if(to_send_bytes == 0) { // 没有要发送的数据了，结束响应
         epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
         my_init();
         return true;
     }
-    while(true) { // 进行分散写
-        // iovec用于执行读取和写入操作
+    while(true) { 
+        // 进行分散写，iovec用于执行读取和写入操作
         // writev函数将多块数据一并写入套接字，避免了多次数据复制和多次系统调用的开销
         temp = writev(m_http_sockfd, m_iv, m_iv_cnt);
-        if(temp <= -1) {
+        if(temp == -1) {
             // 若TCP缓冲没有空间，则等待下一轮EPOLLOUT事件
             // 此时虽无法立即收到该客户端的下一个请求，但可以保证连接的稳定性
             if(errno == EAGAIN) { // 修改epoll监听事件来等待下一次写事件
@@ -137,19 +135,18 @@ bool HttpConn::write() // 响应存入到写缓冲区，发送
         to_send_bytes -= temp; // 更新信息，还剩下多少字节需要发送
         if(send_bytes >= m_iv[0].iov_len) {
             m_iv[0].iov_len = 0;
-            m_iv[1].iov_base = m_file_address + (send_bytes - m_write_index);
+            m_iv[1].iov_base = m_file_address + (send_bytes - m_write_index); // 更新iovec指针的位置
             m_iv[1].iov_len = to_send_bytes;
         }
         else {
             m_iv[0].iov_base = m_writebuffer + send_bytes;
-            m_iv[0].iov_len = m_iv[0].iov_len - temp;
+            m_iv[0].iov_len = m_iv[0].iov_len - send_bytes;
         }
+        // 数据已经发送完毕
         if(to_send_bytes <= 0) {
-            // 发送HTTP响应成功, 根据HTTP请求中的Connection连接状态
-            // 来决定是否关闭连接
-            free_mmap();
-            epoller->add_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
-            if(m_conn_status) {
+            free_mmap(); // 重置epolloneshot事件
+            epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
+            if(m_conn_status) { // 请求为长连接
                 my_init();
                 return true;
             }
@@ -191,7 +188,7 @@ HttpConn::HTTP_CODE HttpConn::parse_request()
         // 解析到了请求体和一行数据
         line_data = get_linedata(); // 获得一行数据
         m_start_line = m_cur_index; // 更新解析的行首位置
-        Info("got 1 http line data: \n%s", line_data);
+        Info("\ngot 1 http line data: \n%s\n", line_data);
 
         switch (m_cur_mainstate) // 主状态机 (有效状态机)
         {
@@ -235,7 +232,7 @@ HttpConn::HTTP_CODE HttpConn::parse_request()
 HttpConn::HTTP_CODE HttpConn::parse_request_line(char* text)
 {
     m_url = strpbrk(text, " \t"); // 判断字符空格或制表符哪个先在text中出现，并返回位置
-    if(!m_url) {
+    if(m_url == nullptr) {
         return BAD_REQUEST;
     }
     *m_url++ = '\0';
@@ -267,9 +264,11 @@ HttpConn::HTTP_CODE HttpConn::parse_request_line(char* text)
     if(m_url == nullptr || m_url[0] != '/') {
         return BAD_REQUEST;
     }
-    
-    // 更新检查状态
-    // 主状态机状态变为检查请求头
+    // 当url为'/'时，显示网站首页
+    if(strlen(m_url) == 1) {
+        strcat(m_url, "home.html");
+    }
+    // 更新检查状态,主状态机状态变为检查请求头
     m_cur_mainstate = CHECK_STATE_HEADER;
     return NO_REQUEST;
 }
@@ -289,24 +288,24 @@ HttpConn::HTTP_CODE HttpConn::parse_request_headers(char* text)
         // 192.168.184.10:8888, 此时指针指向'192'的'1'位置
         text += strspn(text, " \t"); // 移动指针到第一个不在这个字符集合中的字符处
         m_hostaddr = text;
-        Info("host_addr:%s\n", m_hostaddr);
+        Info("\nhost_addr:%s\n", m_hostaddr);
     }
     else if(strncasecmp(text, "Connection:", 11) == 0) { // 获取连接状态
         text += 11;
         text += strspn(text, " \t");
-        if(strcmp(text, "keep-alive") == 0) {
-            m_conn_status = true;
+        if(strcasecmp(text, "keep-alive") == 0) {
+            m_conn_status = true; //保持连接
         }
-        Info("http connection status: %d\n", m_conn_status);
+        Info("\nhttp connection status: %d\n", m_conn_status);
     }
     else if(strncasecmp(text, "Content-Length:", 15) == 0) { // 内容长度
         text += 15;
         text += strspn(text, " \t");
         m_content_length = atol(text);
-        Info("content_length: %d\n", m_content_length);
+        Info("\ncontent_length: %d\n", m_content_length);
     }
     else { // 其他，出现未知头部字段
-        Info("unknow header %s\n", text);
+        Info("\nunknow header %s\n", text);
     }
     return NO_REQUEST;
 }
@@ -314,7 +313,7 @@ HttpConn::HTTP_CODE HttpConn::parse_request_headers(char* text)
 // 解析请求体内容
 HttpConn::HTTP_CODE HttpConn::parse_request_content(char* text)
 {
-    if(m_read_index > (m_content_length + m_cur_index)) { // 指针能移动到请求体部分，说明可以拿到这部分信息
+    if(m_read_index >= (m_content_length + m_cur_index)) { // 指针能移动到请求体部分，说明可以拿到这部分信息
 
         // 解析具体的逻辑未实现TODO
 
@@ -360,14 +359,13 @@ HttpConn::HTTP_CODE HttpConn::do_request()
 {
     strcpy(m_real_file, web_root_src);
     int len = strlen(web_root_src);
-//    if(len < FILEPATH_LEN-1) {
-//        strncat(m_real_file, m_url, FILEPATH_LEN - len - 1); // 追加信息，拼接成要访问本地的文件路径
-//    }
-    strncpy(m_real_file + len, m_url, FILEPATH_LEN - len -1);
-    Info("the client request file path: %s", m_real_file);
+    if(len < FILEPATH_LEN-1) {
+        strncat(m_real_file, m_url, FILEPATH_LEN - len - 1); // 追加信息，拼接成要访问本地的文件路径
+    }
+    Info("\nthe client request file path: %s\n", m_real_file);
     // 先获取m_real_file文件相关的状态信息，-1失败，0成功
     if(stat(m_real_file, &m_file_status) < 0) {
-        return NO_REQUEST;
+        return NO_RESOURCE;
     }
 
     // 判断文件能否访问
@@ -450,8 +448,12 @@ bool HttpConn::process_response(HTTP_CODE ret)
         {
             add_response_statline(200, ok_200_title);
             add_response_headers(m_file_status.st_size);
+
+            // iovec指向响应报文缓冲区
             m_iv[0].iov_base = m_writebuffer; // 指向数据块的起始地址
             m_iv[0].iov_len = m_write_index; // // 数据块的长度
+
+            // iovec指向mmap返回的文件指针
             m_iv[1].iov_base = m_file_address;
             m_iv[1].iov_len = m_file_status.st_size;
             m_iv_cnt = 2;
@@ -461,7 +463,7 @@ bool HttpConn::process_response(HTTP_CODE ret)
         }
         default:
             return false;
-    }
+    } 
     m_iv[0].iov_base = m_writebuffer; // 默认只存写缓冲区的信息
     m_iv[0].iov_len = m_write_index; 
     m_iv_cnt = 1;
@@ -479,7 +481,10 @@ bool HttpConn::add_response_info(const char* format, ...)
     va_start(arg_list, format); // 存入写缓冲区中
     // vsnprintf(arg_content, len + 1, format, arg_ptr); // 参数列表格式
     int len = vsnprintf((m_writebuffer + m_write_index), (WRITE_BUFFER_SIZE - m_write_index - 1), format, arg_list);
+
+    // 写入数据超过缓冲区数据
     if(len >= (WRITE_BUFFER_SIZE - m_write_index - 1)) {
+        va_end(arg_list); // 清空可变参列表
         return false;
     }
     m_write_index += len;
@@ -505,7 +510,7 @@ void HttpConn::add_response_headers(int content_length)
 // 生成响应体
 bool HttpConn::add_response_content(const char* content)
 {
-    return add_response_info("%s", content);
+    return add_response_info("%s\n", content);
 }
 
 // 响应连接状态
