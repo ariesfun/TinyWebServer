@@ -1,0 +1,12 @@
+{
+  "comment" : "This is MySQL Config Info",
+  "host" : "192.168.184.10",
+  "port" : 3306,
+  "username" : "root",
+  "password" : "root",
+  "db_name" : "database_test",
+  "max_ConnSize" : 1024,
+  "min_ConnSize" : 100,
+  "thTimeout" : 1000,
+  "maxFreeTime" : 5000
+}
