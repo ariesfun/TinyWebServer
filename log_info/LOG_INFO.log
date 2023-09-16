@@ -1,120 +1,382 @@
 
-[2023-09-14 03:26:46:260] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:7784624995661565720> 
+[2023-09-14 09:04:26:489] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:11151093670728025344> 
 unknow header Upgrade-Insecure-Requests: 1
 
-[2023-09-14 03:26:46:260] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:7784624995661565720> 
+[2023-09-14 09:04:26:489] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:11151093670728025344> 
 got 1 http line data: 
 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36
 
-[2023-09-14 03:26:46:260] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:7784624995661565720> 
+[2023-09-14 09:04:26:489] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:11151093670728025344> 
 unknow header User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36
 
-[2023-09-14 03:26:46:260] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:7784624995661565720> 
+[2023-09-14 09:04:26:489] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:11151093670728025344> 
+got 1 http line data: 
+Sec-Purpose: prefetch;prerender
+
+[2023-09-14 09:04:26:489] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:11151093670728025344> 
+unknow header Sec-Purpose: prefetch;prerender
+
+[2023-09-14 09:04:26:489] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:11151093670728025344> 
+got 1 http line data: 
+Purpose: prefetch
+
+[2023-09-14 09:04:26:489] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:11151093670728025344> 
+unknow header Purpose: prefetch
+
+[2023-09-14 09:04:26:489] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:11151093670728025344> 
 got 1 http line data: 
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
 
-[2023-09-14 03:26:46:260] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:7784624995661565720> 
+[2023-09-14 09:04:26:489] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:11151093670728025344> 
 unknow header Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
 
-[2023-09-14 03:26:46:260] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:7784624995661565720> 
+[2023-09-14 09:04:26:489] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:11151093670728025344> 
 got 1 http line data: 
 Accept-Encoding: gzip, deflate
 
-[2023-09-14 03:26:46:260] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:7784624995661565720> 
+[2023-09-14 09:04:26:489] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:11151093670728025344> 
 unknow header Accept-Encoding: gzip, deflate
 
-[2023-09-14 03:26:46:260] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:7784624995661565720> 
+[2023-09-14 09:04:26:489] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:11151093670728025344> 
 got 1 http line data: 
 Accept-Language: zh-CN,zh;q=0.9,en;q=0.8
 
-[2023-09-14 03:26:46:260] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:7784624995661565720> 
+[2023-09-14 09:04:26:489] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:11151093670728025344> 
 unknow header Accept-Language: zh-CN,zh;q=0.9,en;q=0.8
 
-[2023-09-14 03:26:46:260] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:7784624995661565720> 
+[2023-09-14 09:04:26:489] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:11151093670728025344> 
 got 1 http line data: 
 
 
-[2023-09-14 03:26:46:260] [INFO] [http_conn.cpp:374] (func:do_request) <thread-id:7784624995661565720> 
+[2023-09-14 09:04:26:489] [INFO] [http_conn.cpp:374] (func:do_request) <thread-id:11151093670728025344> 
 the client request file path: /home/ariesfun/Resume_Projects/TinyWebServer/resources/home.html
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:116] (func:read) <thread-id:14423194055614663059> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:116] (func:read) <thread-id:11359470460195613614> 
 read data is:
 GET /img/home_bg.png HTTP/1.1
 Host: 192.168.184.10:7878
 Connection: keep-alive
+Sec-Purpose: prefetch;prerender
 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36
 Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+Purpose: prefetch
 Referer: http://192.168.184.10:7878/
 Accept-Encoding: gzip, deflate
 Accept-Language: zh-CN,zh;q=0.9,en;q=0.8
 
 
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:10508312028154275417> 
 got 1 http line data: 
 GET /img/home_bg.png HTTP/1.1
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:10508312028154275417> 
 got 1 http line data: 
 Host: 192.168.184.10:7878
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:300] (func:parse_request_headers) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:300] (func:parse_request_headers) <thread-id:10508312028154275417> 
 host_addr:192.168.184.10:7878
 
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:10508312028154275417> 
 got 1 http line data: 
 Connection: keep-alive
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:308] (func:parse_request_headers) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:308] (func:parse_request_headers) <thread-id:10508312028154275417> 
 http connection status: 1
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:10508312028154275417> 
+got 1 http line data: 
+Sec-Purpose: prefetch;prerender
+
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:10508312028154275417> 
+unknow header Sec-Purpose: prefetch;prerender
+
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:10508312028154275417> 
 got 1 http line data: 
 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:10508312028154275417> 
 unknow header User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:10508312028154275417> 
 got 1 http line data: 
 Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:10508312028154275417> 
 unknow header Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:10508312028154275417> 
+got 1 http line data: 
+Purpose: prefetch
+
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:10508312028154275417> 
+unknow header Purpose: prefetch
+
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:10508312028154275417> 
 got 1 http line data: 
 Referer: http://192.168.184.10:7878/
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:10508312028154275417> 
 unknow header Referer: http://192.168.184.10:7878/
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:10508312028154275417> 
 got 1 http line data: 
 Accept-Encoding: gzip, deflate
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:10508312028154275417> 
 unknow header Accept-Encoding: gzip, deflate
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:10508312028154275417> 
 got 1 http line data: 
 Accept-Language: zh-CN,zh;q=0.9,en;q=0.8
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:10508312028154275417> 
 unknow header Accept-Language: zh-CN,zh;q=0.9,en;q=0.8
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:10508312028154275417> 
 got 1 http line data: 
 
 
-[2023-09-14 03:26:46:313] [INFO] [http_conn.cpp:374] (func:do_request) <thread-id:7853835561298316868> 
+[2023-09-14 09:04:26:653] [INFO] [http_conn.cpp:374] (func:do_request) <thread-id:10508312028154275417> 
 the client request file path: /home/ariesfun/Resume_Projects/TinyWebServer/resources/img/home_bg.png
 
-[2023-09-14 03:26:57:194] [INFO] [webserver.cpp:88] (func:operator()) <thread-id:14423194055614663059> 
+[2023-09-14 09:04:36:712] [INFO] [webserver.cpp:88] (func:operator()) <thread-id:11359470460195613614> 
 Timeout !!! 
-Connection closed due to inactivity! user:2 ,fd info: 6.
+Connection closed due to inactivity! client_id: 1 ,fd_info: 3.
 
-[2023-09-14 03:26:57:194] [INFO] [webserver.cpp:88] (func:operator()) <thread-id:14423194055614663059> 
+[2023-09-16 14:06:58:017] [INFO] [webserver.cpp:29] (func:log_init) <thread-id:17498404332819138998> 
+-------------INIT-----------------
+--------SERVER LOG STARTING-------
+----------------------------------
+
+[2023-09-16 14:06:58:251] [INFO] [thread_pool.h:54] (func:ThreadPool) <thread-id:17498404332819138998> 
+
+the total create thread num is 8
+
+
+[2023-09-16 14:07:10:065] [INFO] [http_conn.cpp:116] (func:read) <thread-id:17498404332819138998> 
+read data is:
+GET / HTTP/1.1
+Host: 192.168.184.10:7878
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.81
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+
+
+[2023-09-16 14:07:10:065] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:13196639079478884349> 
+got 1 http line data: 
+GET / HTTP/1.1
+
+[2023-09-16 14:07:10:065] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:13196639079478884349> 
+got 1 http line data: 
+Host: 192.168.184.10:7878
+
+[2023-09-16 14:07:10:066] [INFO] [http_conn.cpp:300] (func:parse_request_headers) <thread-id:13196639079478884349> 
+host_addr:192.168.184.10:7878
+
+
+[2023-09-16 14:07:10:066] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:13196639079478884349> 
+got 1 http line data: 
+Connection: keep-alive
+
+[2023-09-16 14:07:10:066] [INFO] [http_conn.cpp:308] (func:parse_request_headers) <thread-id:13196639079478884349> 
+http connection status: 1
+
+[2023-09-16 14:07:10:066] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:13196639079478884349> 
+got 1 http line data: 
+Upgrade-Insecure-Requests: 1
+
+[2023-09-16 14:07:10:066] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:13196639079478884349> 
+unknow header Upgrade-Insecure-Requests: 1
+
+[2023-09-16 14:07:10:066] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:13196639079478884349> 
+got 1 http line data: 
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.81
+
+[2023-09-16 14:07:10:066] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:13196639079478884349> 
+unknow header User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.81
+
+[2023-09-16 14:07:10:066] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:13196639079478884349> 
+got 1 http line data: 
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+
+[2023-09-16 14:07:10:066] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:13196639079478884349> 
+unknow header Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+
+[2023-09-16 14:07:10:066] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:13196639079478884349> 
+got 1 http line data: 
+Accept-Encoding: gzip, deflate
+
+[2023-09-16 14:07:10:066] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:13196639079478884349> 
+unknow header Accept-Encoding: gzip, deflate
+
+[2023-09-16 14:07:10:066] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:13196639079478884349> 
+got 1 http line data: 
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+[2023-09-16 14:07:10:066] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:13196639079478884349> 
+unknow header Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+[2023-09-16 14:07:10:066] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:13196639079478884349> 
+got 1 http line data: 
+
+
+[2023-09-16 14:07:10:066] [INFO] [http_conn.cpp:374] (func:do_request) <thread-id:13196639079478884349> 
+the client request file path: /home/ariesfun/Resume_Projects/TinyWebServer/resources/home.html
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:116] (func:read) <thread-id:17498404332819138998> 
+read data is:
+GET /img/home_bg.png HTTP/1.1
+Host: 192.168.184.10:7878
+Connection: keep-alive
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.81
+Accept: image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+Referer: http://192.168.184.10:7878/
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:9312385068630001786> 
+got 1 http line data: 
+GET /img/home_bg.png HTTP/1.1
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:9312385068630001786> 
+got 1 http line data: 
+Host: 192.168.184.10:7878
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:300] (func:parse_request_headers) <thread-id:9312385068630001786> 
+host_addr:192.168.184.10:7878
+
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:9312385068630001786> 
+got 1 http line data: 
+Connection: keep-alive
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:308] (func:parse_request_headers) <thread-id:9312385068630001786> 
+http connection status: 1
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:9312385068630001786> 
+got 1 http line data: 
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.81
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:9312385068630001786> 
+unknow header User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.81
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:9312385068630001786> 
+got 1 http line data: 
+Accept: image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:9312385068630001786> 
+unknow header Accept: image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:9312385068630001786> 
+got 1 http line data: 
+Referer: http://192.168.184.10:7878/
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:9312385068630001786> 
+unknow header Referer: http://192.168.184.10:7878/
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:9312385068630001786> 
+got 1 http line data: 
+Accept-Encoding: gzip, deflate
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:9312385068630001786> 
+unknow header Accept-Encoding: gzip, deflate
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:9312385068630001786> 
+got 1 http line data: 
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:9312385068630001786> 
+unknow header Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:9312385068630001786> 
+got 1 http line data: 
+
+
+[2023-09-16 14:07:10:262] [INFO] [http_conn.cpp:374] (func:do_request) <thread-id:9312385068630001786> 
+the client request file path: /home/ariesfun/Resume_Projects/TinyWebServer/resources/img/home_bg.png
+
+[2023-09-16 14:07:10:332] [INFO] [http_conn.cpp:116] (func:read) <thread-id:17498404332819138998> 
+read data is:
+GET /favicon.ico HTTP/1.1
+Host: 192.168.184.10:7878
+Connection: keep-alive
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.81
+Accept: image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+Referer: http://192.168.184.10:7878/
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:15338725124085074230> 
+got 1 http line data: 
+GET /favicon.ico HTTP/1.1
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:15338725124085074230> 
+got 1 http line data: 
+Host: 192.168.184.10:7878
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:300] (func:parse_request_headers) <thread-id:15338725124085074230> 
+host_addr:192.168.184.10:7878
+
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:15338725124085074230> 
+got 1 http line data: 
+Connection: keep-alive
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:308] (func:parse_request_headers) <thread-id:15338725124085074230> 
+http connection status: 1
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:15338725124085074230> 
+got 1 http line data: 
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.81
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:15338725124085074230> 
+unknow header User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.81
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:15338725124085074230> 
+got 1 http line data: 
+Accept: image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:15338725124085074230> 
+unknow header Accept: image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:15338725124085074230> 
+got 1 http line data: 
+Referer: http://192.168.184.10:7878/
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:15338725124085074230> 
+unknow header Referer: http://192.168.184.10:7878/
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:15338725124085074230> 
+got 1 http line data: 
+Accept-Encoding: gzip, deflate
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:15338725124085074230> 
+unknow header Accept-Encoding: gzip, deflate
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:15338725124085074230> 
+got 1 http line data: 
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:317] (func:parse_request_headers) <thread-id:15338725124085074230> 
+unknow header Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:200] (func:parse_request) <thread-id:15338725124085074230> 
+got 1 http line data: 
+
+
+[2023-09-16 14:07:10:333] [INFO] [http_conn.cpp:374] (func:do_request) <thread-id:15338725124085074230> 
+the client request file path: /home/ariesfun/Resume_Projects/TinyWebServer/resources/favicon.ico
+
+[2023-09-16 14:07:21:052] [INFO] [webserver.cpp:88] (func:operator()) <thread-id:17498404332819138998> 
 Timeout !!! 
-Connection closed due to inactivity! user:2 ,fd info: 7.
+Connection closed due to inactivity! client_id: 1 ,fd_info: 7.

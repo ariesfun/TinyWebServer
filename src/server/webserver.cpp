@@ -85,7 +85,7 @@ void WebServer::start()
             if ((client_info[sockfd].client_isvalid()) && (last_activetime > 0) && (now - last_activetime > INACTIVE_THRESHOLD)) {
                 sockets_to_remove.push_back(sockfd);
                 printf("[用户fd: %d] 超时连接，已经断开！\n", sockfd);
-                Info("Timeout !!! \nConnection closed due to inactivity! user:%d ,fd info: %d.", HttpConn::m_client_cnt, sockfd); // 增加日志记录
+                Info("Timeout !!! \nConnection closed due to inactivity! client_id: %d ,fd_info: %d.", HttpConn::m_client_cnt, sockfd); // 增加日志记录
             }
         }
 
@@ -150,8 +150,7 @@ int WebServer::check_error(int ret, const char* format) // 进行错误检查
 {
     if(ret == -1) { // linux系统IO函数失败会返回-1
         int saved_errno = errno;
-        Error(format);
-        Error("the check_error detail: %s", strerror(saved_errno));
+        Error("%s \nthe check_error detail: %s", format, strerror(saved_errno));
     }
     return ret;
 }
