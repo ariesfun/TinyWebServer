@@ -2,12 +2,11 @@
 #include <iostream>
 #include <cstring>
 #include <sys/epoll.h>
-
-#include <fcntl.h> // 文件操作
-#include <unistd.h> // close()
-#include <sys/mman.h> // mmap()
-#include <sys/uio.h> // writev()
-#include <cstdarg> // va_start()
+#include <fcntl.h>      // 文件操作
+#include <unistd.h>     // close()
+#include <sys/mman.h>   // mmap()
+#include <sys/uio.h>    // writev()
+#include <cstdarg>      // va_start()
 
 #include "logger.h"
 using namespace ariesfun::log;
@@ -172,6 +171,7 @@ void HttpConn::start_process()
     // 1.解析HTTP请求，读取数据(进行业务的逻辑处理)
     HTTP_CODE read_ret = parse_request(); // 根据不同状态来处理业务，状态会发生转移
     if(read_ret == NO_REQUEST) { // 请问不完整
+        // 继续接收请求，注册并监听读事件
         m_epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
         return;
     }
@@ -182,7 +182,7 @@ void HttpConn::start_process()
         close_conn();
     }
 
-    // 3.返回数据给客户端
+    // 3.返回数据给客户端，注册并监听写事件
     m_epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLOUT);
 }
 
@@ -192,7 +192,7 @@ HttpConn::HTTP_CODE HttpConn::parse_request()
     LINE_STATUS line_status = LINE_OK;
     HTTP_CODE request_ret = NO_REQUEST; 
     char* line_data = nullptr;
-    while((m_cur_mainstate == CHECK_STATE_CONTENT) && (line_status = LINE_OK) || // 主状态机解析请求体，从状态机解析行成功
+    while((m_cur_mainstate == CHECK_STATE_CONTENT) && (line_status = LINE_OK) || // 主状态机解析请求体作为循环入口，从状态机解析行成功
          ((line_status = parse_detail_line()) == LINE_OK)) { // 每次解析一行数据
         // 解析到了请求体和一行数据
         line_data = get_linedata(); // 获得一行数据
@@ -216,16 +216,19 @@ HttpConn::HTTP_CODE HttpConn::parse_request()
                     return BAD_REQUEST;
                 }
                 else if(request_ret == GET_REQUEST) { // 获得了一个完整的客户请求
+                    // 进行响应
                     return do_request();
                 }
                 break;
             }
             case CHECK_STATE_CONTENT:
             {
+                // 用于POST，解析请求体的内容
                 request_ret = parse_request_content(line_data);
                 if(request_ret == GET_REQUEST) {
                     return do_request();
                 }
+                // 解析完成需要退出，更新状态避免再次进行循环
                 line_status = LINE_INCOMPLETE; // 行不完整
                 break;
             }          
@@ -251,9 +254,13 @@ HttpConn::HTTP_CODE HttpConn::parse_request_line(char* text)
     if(strcasecmp(method, "GET") == 0) {
         m_method = GET; // 得到请求方法
     }
+    else if(strcasecmp(method, "POST") == 0) {
+        m_method = POST;
+    }
     else {
         return BAD_REQUEST;
     }
+
     // m_url: /index.html HTTP/1.1
     m_version = strpbrk(m_url, " \t");
     if(m_version == nullptr) {
@@ -270,13 +277,16 @@ HttpConn::HTTP_CODE HttpConn::parse_request_line(char* text)
         m_url += 7; // 192.168.1.1:8888/index.html
         m_url = strchr(m_url, '/'); // /index.html
     }
+
     if(m_url == nullptr || m_url[0] != '/') {
         return BAD_REQUEST;
     }
+
     // 当url为'/'时，显示网站首页
     if(strlen(m_url) == 1) {
         strcat(m_url, "home.html");
     }
+
     // 更新检查状态,主状态机状态变为检查请求头
     m_cur_mainstate = CHECK_STATE_HEADER;
     return NO_REQUEST;
@@ -286,7 +296,7 @@ HttpConn::HTTP_CODE HttpConn::parse_request_line(char* text)
 HttpConn::HTTP_CODE HttpConn::parse_request_headers(char* text)
 {
     if(text[0] == '\0') { // 为空时，头部解析完成
-        if(m_content_length != 0) { // 如果消息体有内容，状态机状态需要转移
+        if(m_content_length != 0) { // 如果消息体有内容即为POST请求，状态机状态需要转移
             m_cur_mainstate = CHECK_STATE_CONTENT;
             return NO_REQUEST;
         }
@@ -297,7 +307,6 @@ HttpConn::HTTP_CODE HttpConn::parse_request_headers(char* text)
         // 192.168.184.10:8888, 此时指针指向'192'的'1'位置
         text += strspn(text, " \t"); // 移动指针到第一个不在这个字符集合中的字符处
         m_hostaddr = text;
-        Info("host_addr:%s\n", m_hostaddr);
     }
     else if(strncasecmp(text, "Connection:", 11) == 0) { // 获取连接状态
         text += 11;
@@ -305,28 +314,28 @@ HttpConn::HTTP_CODE HttpConn::parse_request_headers(char* text)
         if(strcasecmp(text, "keep-alive") == 0) {
             m_conn_status = true; //保持连接
         }
-        Info("http connection status: %d", m_conn_status);
     }
     else if(strncasecmp(text, "Content-Length:", 15) == 0) { // 内容长度
         text += 15;
         text += strspn(text, " \t");
         m_content_length = atol(text);
-        Info("content_length: %d", m_content_length);
     }
     else { // 其他，出现未知头部字段
-        Info("unknow header %s", text);
+        Info("unknow header info %s", text);
     }
     return NO_REQUEST;
 }
 
-// 解析请求体内容
+// 解析请求体内容,POST
 HttpConn::HTTP_CODE HttpConn::parse_request_content(char* text)
 {
+    std::cout << "get post content" << std::endl;
+    std::cout << "str_postinfo: " << str_postinfo << std::endl;
     if(m_read_index >= (m_content_length + m_cur_index)) { // 指针能移动到请求体部分，说明可以拿到这部分信息
-
-        // 解析具体的逻辑未实现TODO
-
         text[m_content_length] = '\0';
+        str_postinfo = text;
+        Info("parse post information: %s", str_postinfo);
+        std::cout << "str_postinfo: " << str_postinfo << std::endl;
         return GET_REQUEST;
     }
     return NO_REQUEST;
@@ -345,7 +354,7 @@ HttpConn::LINE_STATUS HttpConn::parse_detail_line() // 解析一行数据报文�
             else if(m_readbuffer[m_cur_index + 1] == '\n') {
                 m_readbuffer[m_cur_index++] = '\0'; // '\r'置空
                 m_readbuffer[m_cur_index++] = '\0'; // '\n'置空
-                return LINE_OK;
+                return LINE_OK; // 此时读指针移到了下一行开头
             }
             return LINE_BAD; // 行出错
         }
@@ -358,7 +367,7 @@ HttpConn::LINE_STATUS HttpConn::parse_detail_line() // 解析一行数据报文�
             return LINE_BAD;
         }
     }
-    return LINE_INCOMPLETE; // 数据不完整
+    return LINE_INCOMPLETE; // 数据不完整，需要继续接收请求
 }   
 
 // 当得到一个完整正确的HTTP请求时，我们就分析目标文件的属性
@@ -368,10 +377,30 @@ HttpConn::HTTP_CODE HttpConn::do_request()
 {
     strcpy(m_real_file, web_root_src);
     int len = strlen(web_root_src);
-    if(len < FILEPATH_LEN-1) {
-        strncat(m_real_file, m_url, FILEPATH_LEN - len - 1); // 追加信息，拼接成要访问本地的文件路径
+
+    std::cout << "m_url: " << m_url << std::endl;  
+
+    if(strcmp(m_url, "/login") == 0) {
+        std::cout << "用户请求登录" << std::endl;
+        strncat(m_real_file, "/login.html", FILEPATH_LEN - len - 1);
+        // 处理登录请求
+        // HTTP_CODE login_result = process_login_request();
+        // if (login_result == OK) {
+        // // 登录成功，可以执行重定向等操作
+        //     return OK;
+        // } else {
+        // // 登录失败，可以返回相应的错误响应
+        //     return login_result;
+        // }
     }
-    Info("the client request file path: %s", m_real_file);
+    else {
+        if(len < FILEPATH_LEN-1) {
+            strncat(m_real_file, m_url, FILEPATH_LEN - len - 1); // 追加信息，拼接成要访问本地的文件路径
+        }
+        Info("the client request file path: %s", m_real_file);
+    }
+
+    // 请求错误检测
     // 先获取m_real_file文件相关的状态信息，-1失败，0成功
     if(stat(m_real_file, &m_file_status) < 0) {
         return NO_RESOURCE;
@@ -381,7 +410,6 @@ HttpConn::HTTP_CODE HttpConn::do_request()
     if(!(m_file_status.st_mode & S_IROTH)) {
         return FORBIDDEN_REQUEST;
     }
-
     // 判断是否是目录
     if(S_ISDIR(m_file_status.st_mode)) {
         return BAD_REQUEST;
@@ -425,7 +453,7 @@ bool HttpConn::process_response(HTTP_CODE ret)
             }
             break;
         }
-        case FORBIDDEN_REQUEST:
+        case FORBIDDEN_REQUEST: // 访问禁止
         {
             add_response_statline(403, error_403_title);
             add_response_headers(strlen(error_403_form));

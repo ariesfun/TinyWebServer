@@ -76,10 +76,11 @@ void WebServer::start()
         break;
     }
     // 添加一个非活跃连接的定时事件, 重复触发
-    const int INACTIVE_THRESHOLD = 10 * 1000;
+    const int INACTIVE_THRESHOLD = 20 * 1000;
     m_timer->AddTimer(1000, -1, [&](const TimerNode &node) {
-         // 处理超时断开的功能
-        for (int sockfd : active_clients) {
+        // 处理超时断开的功能
+        if(!active_clients.empty()) {
+            for (int sockfd : active_clients) {
             time_t now = Timer::GetTick();
             time_t last_activetime = client_info[sockfd].m_active_time;
             if ((client_info[sockfd].client_isvalid()) && (last_activetime > 0) && (now - last_activetime > INACTIVE_THRESHOLD)) {
@@ -95,6 +96,7 @@ void WebServer::start()
             active_clients.erase(sockfd);
         }
         sockets_to_remove.clear(); // 清空待删除列表
+        }
     });
 
     // 遍历事件数组，处理网络事件
