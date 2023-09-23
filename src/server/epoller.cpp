@@ -11,7 +11,7 @@ void Epoller::add_fd(int epollfd, int fd, bool one_shot)
 {
     epoll_event event;
     event.data.fd = fd;
-    event.events = EPOLLIN | EPOLLRDHUP; //  默认用水平触发, EPOLLET是改为边沿触发
+    event.events = EPOLLIN | EPOLLET | EPOLLRDHUP; // 默认用水平触发, EPOLLET是改为边沿触发
     if(one_shot) {
         event.events |= EPOLLONESHOT;
     }
@@ -24,7 +24,7 @@ void Epoller::add_fd(int epollfd, int fd, bool one_shot)
 
 void Epoller::remove_fd(int epollfd, int fd)
 {
-    int ret = epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, nullptr);
+    int ret = epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, 0);
     if(ret == -1) {
         int saved_errno = errno;
         Error("remove event failed: %s", strerror(saved_errno));

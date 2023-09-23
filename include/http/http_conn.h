@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <netinet/in.h> // sockaddr_in类型
-#include <sys/stat.h>// stat结构体
+#include <sys/stat.h>   // stat结构体
 #include "epoller.h"
 
 class HttpConn {
@@ -87,7 +87,8 @@ private:
     struct stat m_file_status;              // 请求的目标文件状态
     char* m_file_address;                   // 目标文件被映射到内存的起始位置
 
-    char* str_postinfo;               // 保存用户的post信息
+    bool is_post_status;                    // 当前是否为解析post请求
+    char* str_postinfo;                     // 保存用户的post信息
 
     int send_bytes;                         // 已发送的字节数
     int to_send_bytes;                      // 待发送的字节数
