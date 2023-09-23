@@ -59,11 +59,11 @@ std::string MySQLConn::getFieldValue(int index)
 {
     int colNum = mysql_num_fields(m_query_res);
     if(index >= colNum || index < 0) {
-        return " "; // 返回空串
+        return " ";                         // 返回空串
     }
-    char* value = m_row_record[index]; // 对于二进制数据中间是有'\0'的，直接转成字符串会有问题
+    char* value = m_row_record[index];      // 对于二进制数据中间是有'\0'的，直接转成字符串会有问题
     unsigned long len = mysql_fetch_lengths(m_query_res)[index];
-    return std::string(value, len); // 将指定长度的字符转成string
+    return std::string(value, len);         // 将指定长度的字符转成string
 }
 
 bool MySQLConn::executeTransaction()

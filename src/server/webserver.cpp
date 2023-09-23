@@ -85,7 +85,7 @@ void WebServer::start()
             time_t last_activetime = client_info[sockfd].m_active_time;
             if ((client_info[sockfd].client_isvalid()) && (last_activetime > 0) && (now - last_activetime > INACTIVE_THRESHOLD)) {
                 sockets_to_remove.push_back(sockfd);
-                printf("[用户fd: %d] 超时连接，已经断开！\n", sockfd);
+                Info("[用户fd: %d] 超时连接，已经断开！\n", sockfd);
                 Info("Timeout !!! \nConnection closed due to inactivity! client_id: %d ,fd_info: %d.", HttpConn::m_client_cnt, sockfd); // 增加日志记录
             }
         }

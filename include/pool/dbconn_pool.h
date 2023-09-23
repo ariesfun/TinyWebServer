@@ -18,7 +18,7 @@ private:
     bool parseJsonFile();
     void addDBConn();
 
-    [[noreturn]] void produceConn(); // 线程池的任务函数
+    [[noreturn]] void produceConn();       // 线程池的任务函数
     [[noreturn]] void destoryConn();
 
 private:

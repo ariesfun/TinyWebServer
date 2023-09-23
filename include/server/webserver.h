@@ -44,14 +44,10 @@ private:
     std::vector<int> sockets_to_remove;
 
 private:
-    
     int serverPort;         // 服务器的一些配置信息
     int threadpoolNum;
     int threadpoolRequest;
-    // std::string mysqlHost;
-    // std::string mysqlUser;
-    // std::string mysqlPwd;
-    // std::string mysqlDatabase;
+
 };
 
 #endif // TINYWEBSERVER_WEBSERVER_H

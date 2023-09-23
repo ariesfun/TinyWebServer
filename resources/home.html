@@ -68,9 +68,9 @@
 </head>
 <body>
     <div class="login-container">
-        <h1>欢迎访问本站~~~</h1>
+        <h2>欢迎访问本站~~~</h2>
         <div class="login-form">
-            <form action="login" method="post">
+            <form id="loginForm" action="login" method="post">
                 <label for="username">用户名：</label>
                 <input type="text" id="username" name="username"><br>
                 <label for="password">密码：</label>
@@ -78,10 +78,15 @@
                 <span id="msg" style="font-size: 12px; color: blue"></span><br>
                 <div class="login-buttons">
                     <input type="submit" value="登录">
-                    <input type="submit" onclick="" value="注册">
+                    <input type="submit" value="注册" onclick="setAction('register')">
                 </div>
             </form>
         </div>
     </div>
+    <script>
+        function setAction(action) {    // 根据用户的操作设置表单的action属性
+            document.getElementById('loginForm').action = action;
+        }
+    </script>
 </body>
 </html>

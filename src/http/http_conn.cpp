@@ -49,6 +49,7 @@ void HttpConn::init(int sockfd, const sockaddr_in &addr, time_t tick)
     m_epoller->add_fd(m_http_epollfd, sockfd, true);
     m_client_cnt++;
     my_init();
+    init_userdb_info();         // 有用户连接时，预先获取数据中的用户信息 
 }
 
 // 初始化解析或响应要保存的信息
@@ -77,6 +78,22 @@ void HttpConn::my_init()
     bzero(m_readbuffer, READ_BUFFER_SIZE);
     bzero(m_writebuffer, WRITE_BUFFER_SIZE);
     bzero(m_real_file, FILEPATH_LEN);
+}
+
+void HttpConn::init_userdb_info()
+{
+    db_pool = DBConnPool::getDBConnPool();
+    conn = db_pool->getDBConn(); // 从数据库获得一个连接，可以实现连接的回收
+    std::string sql = "select username, password from user";
+    bool flag = conn->selectDB(sql);
+    if(!flag) {
+        Error("Failed to preload user information in the database! Select error!");
+    }
+    while (conn->processQueryResults()) { 
+        std::string user = conn->getFieldValue(0);
+        std::string pwd = conn->getFieldValue(1);
+        userdb_info[user] = pwd;                            // 将查询到的结果保存
+    }
 }
 
 bool HttpConn::client_isvalid() 
@@ -370,24 +387,30 @@ HttpConn::HTTP_CODE HttpConn::do_request()
     strcpy(m_real_file, web_root_src);
     int len = strlen(web_root_src);
 
-    std::cout << "m_url: " << m_url << std::endl;  
-
-    if(is_post_status && strcmp(m_url, "/login") == 0) {
-        strncat(m_real_file, "/login.html", FILEPATH_LEN - len - 1);
-        // 处理登录请求
-        // HTTP_CODE login_result = process_login_request();
-        // if (login_result == OK) {
-        // // 登录成功，可以执行重定向等操作
-        //     return OK;
-        // } else {
-        // // 登录失败，可以返回相应的错误响应
-        //     return login_result;
-        // }
+    Info("the current request m_url: %s", m_url);  
+    if(is_post_status && (strcmp(m_url, "/register") == 0)) {     // 处理注册请求
+        bool register_ret = process_register_request();
+        if (register_ret) {         
+            strncat(m_real_file, "/home.html", FILEPATH_LEN - len - 1);
+            // 给客户端生成响应
+            // 注册成功，弹窗提示（"注册成功，请先登录"）
+        } else {
+            // 注册失败，用户名重复
+            strncat(m_real_file, "/error.html", FILEPATH_LEN - len - 1);
+        }
     }
-    else {
+    else if(is_post_status && (strcmp(m_url, "/login") == 0)) {   // 处理登录请求
+        bool login_ret = process_login_request();
+        if (login_ret) {
+            strncat(m_real_file, "/welcome.html", FILEPATH_LEN - len - 1);
+        } else {
+            // 登录失败，用户名或密码错误!
+            strncat(m_real_file, "/error.html", FILEPATH_LEN - len - 1);
+        }
+    }
+    else { // 其他文件请求路径
         if(len < FILEPATH_LEN-1) {
-            // strncat(m_real_file, m_url, FILEPATH_LEN - len - 1); // 追加信息，拼接成要访问本地的文件路径
-            strncpy(m_real_file + len, m_url, FILEPATH_LEN - len - 1);
+            strncat(m_real_file, m_url, FILEPATH_LEN - len - 1);  // 追加信息，拼接成要访问本地的文件路径
         }
         Info("the client request file path: %s", m_real_file);
     }
@@ -512,7 +535,7 @@ bool HttpConn::add_response_info(const char* format, ...)
 
     // 写入数据超过缓冲区数据
     if(len >= (WRITE_BUFFER_SIZE - m_write_index - 1)) {
-        va_end(arg_list);                               // 清空可变参列表
+        va_end(arg_list);                                // 清空可变参列表
         return false;
     }
     m_write_index += len;
@@ -564,4 +587,48 @@ bool HttpConn::add_response_contenttype()
 bool HttpConn::add_response_blankline()
 {
     return add_response_info("%s", "\r\n");
+}
+
+// 解析具体的POST请求体中的内容并保存
+void HttpConn::parse_detail_postinfo() 
+{
+    // 提取用户名和密码 username=zhang&password=9090
+    int i = 0;
+    for(i = 9; str_postinfo[i] != '&'; i++) {
+        m_usrname[i-9] = str_postinfo[i];  // 记录zhang这段内容
+    }
+    m_usrname[i-9] = '\0';
+    int j = 0;
+    for(i = i + 10; str_postinfo[i] != '\0'; i++, j++) {
+        m_usrpwd[j] = str_postinfo[i];     // 记录9090这段内容
+    } 
+    m_usrpwd[j] = '\0';
+    Info("Parse got login/register info:\nm_usrname:%s , m_usrpwd:%s", m_usrname, m_usrpwd);
+}
+
+bool HttpConn::process_register_request()
+{
+    parse_detail_postinfo();
+    if(userdb_info.find(m_usrname) == userdb_info.end()) { // 是新用户可以注册
+        char sql[1024] = {0};
+        sprintf(sql, "insert into user values('%s', '%s')", m_usrname, m_usrpwd);
+        bool flag = conn->updateDB(sql);
+        init_userdb_info();                                // 刷新一下本地用户信息
+        return flag;
+    }
+    else {
+        return false;
+    }
+}
+
+bool HttpConn::process_login_request()
+{
+    parse_detail_postinfo();
+    if((userdb_info.find(m_usrname) != userdb_info.end()) && 
+       (userdb_info[m_usrname] == m_usrpwd)) {               // 信息校验成功
+        return true;
+    }
+    else {
+        return false;
+    }
 }

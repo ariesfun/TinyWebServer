@@ -4,7 +4,10 @@
 #include <memory>
 #include <netinet/in.h> // sockaddr_in类型
 #include <sys/stat.h>   // stat结构体
+#include <map>
 #include "epoller.h"
+#include "mysql_conn.h"
+#include "dbconn_pool.h"
 
 class HttpConn {
 private:
@@ -76,22 +79,36 @@ private:
     bool add_response_contenttype();
     bool add_response_blankline();
 
+public:
+    void init_userdb_info();                                    // 预加载数据库中的用户信息
+
 private:
-    char* m_url;                            // 请求的目标文件名
-    METHOD m_method;                        // 请求方法
-    char* m_version;                        // 协议版本
-    char* m_hostaddr;                       // 主机地址
-    bool m_conn_status;                     // http连接状态
-    int m_content_length;                   // http请求体消息的总长度
-    char m_real_file[FILEPATH_LEN];         // 客户端请求访问的文件路径
-    struct stat m_file_status;              // 请求的目标文件状态
-    char* m_file_address;                   // 目标文件被映射到内存的起始位置
+    DBConnPool* db_pool;
+    std::shared_ptr<MySQLConn> conn;
+    char m_usrname[128], m_usrpwd[128];
+    void parse_detail_postinfo();
+    void generateHTMLWithMessage(const char* message);
+    bool process_register_request();
+    bool process_login_request();
 
-    bool is_post_status;                    // 当前是否为解析post请求
-    char* str_postinfo;                     // 保存用户的post信息
+private:
+    char* m_url;                                                // 请求的目标文件名
+    METHOD m_method;                                            // 请求方法
+    char* m_version;                                            // 协议版本
+    char* m_hostaddr;                                           // 主机地址
+    bool m_conn_status;                                         // http连接状态
+    int m_content_length;                                       // http请求体消息的总长度
+    char m_real_file[FILEPATH_LEN];                             // 客户端请求访问的文件路径
+    struct stat m_file_status;                                  // 请求的目标文件状态
+    char* m_file_address;                                       // 目标文件被映射到内存的起始位置
 
-    int send_bytes;                         // 已发送的字节数
-    int to_send_bytes;                      // 待发送的字节数
+    bool is_post_status;                                        // 当前是否为解析post请求
+    char* str_postinfo;                                         // 保存用户的post信息
+
+    int send_bytes;                                             // 已发送的字节数
+    int to_send_bytes;                                          // 待发送的字节数
+
+    std::map<std::string, std::string> userdb_info;             // 保存用户信息到map中
 };
 
 #endif //TINYWEBSERVER_HTTP_CONN_H

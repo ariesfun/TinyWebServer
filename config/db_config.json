@@ -4,9 +4,9 @@
   "port" : 3306,
   "username" : "root",
   "password" : "root",
-  "db_name" : "database_test",
+  "db_name" : "webserver_db",
   "max_ConnSize" : 1024,
   "min_ConnSize" : 100,
   "thTimeout" : 1000,
-  "maxFreeTime" : 5000
+  "maxFreeTime" : 20000
 }
