@@ -51,7 +51,7 @@
             align-items: center; /* 垂直居中对齐 */
         }
 
-        .login-buttons input[type="submit"] {
+        .login-buttons input[type="button"] {
             width: 48%; /* 设置按钮宽度 */
             padding: 10px; /* 设置内边距增加空间 */
             background-color: #007bff; /* 设置按钮背景颜色 */
@@ -61,7 +61,7 @@
             cursor: pointer; /* 添加手型光标 */
         }
 
-        .login-buttons input[type="submit"]:hover {
+        .login-buttons input[type="button"]:hover {
             background-color: #0056b3; /* 鼠标悬停时的背景颜色 */
         }
     </style>
@@ -75,17 +75,38 @@
                 <input type="text" id="username" name="username"><br>
                 <label for="password">密码：</label>
                 <input type="password" id="password" name="password"><br>
-                <span id="msg" style="font-size: 12px; color: blue"></span><br>
+                <span id="msg" style="font-size: 16px; color: blue"></span><br>
                 <div class="login-buttons">
-                    <input type="submit" value="登录">
-                    <input type="submit" value="注册" onclick="setAction('register')">
+                    <input type="button" value="登录" onclick="validateAndSubmit('login')">
+                    <input type="button" value="注册" onclick="validateAndSubmit('register')">
                 </div>
             </form>
         </div>
     </div>
     <script>
-        function setAction(action) {    // 根据用户的操作设置表单的action属性
+        function setAction(action) {            // 根据用户的操作设置表单的action属性
             document.getElementById('loginForm').action = action;
+        }
+        
+        function validateForm() {               // 校验是否为空数据
+            var username = document.getElementById('username').value;
+            var password = document.getElementById('password').value;
+            var msgElement = document.getElementById('msg');
+
+            if (username.trim() === '' || password.trim() === '') {
+                msgElement.textContent = '用户名和密码不能为空';
+                return false;                   // 阻止表单提交
+            } else {
+                msgElement.textContent = '';    // 清空错误消息
+                return true;                    // 允许表单提交
+            }
+        }
+
+        function validateAndSubmit(action) {
+            if (validateForm()) {               // 如果数据校验通过，提交表单
+                setAction(action);          // 设置表单的 action 属性
+                document.getElementById('loginForm').submit();
+            }
         }
     </script>
 </body>
