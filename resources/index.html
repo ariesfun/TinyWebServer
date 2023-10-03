@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页</title>
+
+    <style>
+        /* 添加导航栏样式 */
+        .navbar {
+            background-color: #333; /* 设置导航栏背景颜色 */
+            overflow: hidden; /* 隐藏溢出的内容 */
+            border-radius: 10px; /* 设置导航栏的圆角 */
+        }
+
+        /* 导航栏链接样式 */
+        .navbar a {
+            float: left;        /* 将链接放置在左侧 */
+            display: block; /* 显示为块级元素，占据一整行 */
+            color: white; /* 设置文字颜色 */
+            text-align: center; /* 文字居中对齐 */
+            padding: 14px 16px; /* 设置内边距 */
+            text-decoration: none; /* 去除下划线 */
+        }
+
+        
+        /* 将用户和登录放在右侧 */
+        .navbar-right {
+            float: right;
+        }
+
+        /* 鼠标悬停在链接上的样式 */
+        .navbar a:hover {
+            background-color: #ddd; /* 设置悬停时的背景颜色 */
+            color: black; /* 设置悬停时的文字颜色 */
+        }
+
+
+        body {
+            background-image: url(./img/home_bg.png);
+            background-size: cover;                         /* 控制背景图片的尺寸 */
+            background-position: top;                       /* 控制背景图片的位置 */
+            font-family: Arial, sans-serif;                 /* 设置字体 */
+        }
+        
+        .login-container {
+            width: 300px;                                   /* 设置登录容器的宽度 */
+            margin: 0 auto;                                 /* 居中对齐登录容器 */
+            margin-top: 100px;                              /* 设置登录容器与页面顶部的距离 */
+            background-color: #fff;                       /* 设置登录容器的背景颜色 */
+            padding: 20px;                                  /* 设置内边距，增加内部空间 */
+            border-radius: 5px;                             /* 设置边框圆角 */
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);  /* 添加阴影效果 */
+        }
+
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <div class="navbar">
+        <a href="index.html">首页</a>
+        <a href="chat.html">聊天</a>
+        <div class="navbar-right">
+            <a href="login.html">登录/注册</a>
+        </div>
+        
+    </div>
+    
+    <h1>你已经成功登录啦~~~</h1>
+
+</body>
+</html>

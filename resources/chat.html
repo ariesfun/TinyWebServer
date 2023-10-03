@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT聊天</title>
+
+    <!--对话框-->
+    <link
+        type="text/css"
+        href="https://cdn.jsdelivr.net/gh/MorFansLab/LiteWebChat_Frame/dist/css/litewebchat.min.css"
+        rel="stylesheet"
+    />
+
+    <!--输入框-->
+    <link
+        type="text/css"
+        href="https://cdn.jsdelivr.net/gh/MorFansLab/LiteWebChat_Frame/dist/css/litewebchat_input.min.css"
+        rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/MorFansLab/LiteWebChat_Frame/dist/js/litewebchat_input.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/MorFansLab/LiteWebChat_Frame/dist/js/litewebchat_render.min.js"></script>
+
+    <style type="text/css">
+        /* 全局，当整个HTML页面都是聊天窗口的时候取消body的margin和padding*/
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 6px;
+        }
+        
+        /* 添加导航栏样式 */
+        .navbar {
+            background-color: #333;   /* 设置导航栏背景颜色 */
+            overflow: hidden;           /* 隐藏溢出的内容 */
+            border-radius: 10px;        /* 设置导航栏的圆角 */
+        }
+
+        /* 导航栏链接样式 */
+        .navbar a {
+            float: left;                /* 将链接放置在左侧 */
+            display: block;             /* 显示为块级元素，占据一整行 */
+            color: white;             /* 设置文字颜色 */
+            text-align: center;         /* 文字居中对齐 */
+            padding: 14px 16px;         /* 设置内边距 */
+            text-decoration: none;      /* 去除下划线 */
+        }
+
+        /* 将用户和登录放在右侧 */
+        .navbar-right {
+            float: right;
+        }
+
+        /* 鼠标悬停在链接上的样式 */
+        .navbar a:hover {
+            background-color: #ddd;  /* 设置悬停时的背景颜色 */
+            color: black;            /* 设置悬停时的文字颜色 */
+        }
+
+        /* 手动指定其父容器大小 */
+        .lite-chatmaster {
+            height: 100%;
+            width: 100%;
+        }
+        
+    </style>
+
+</head>
+
+<body>
+    <!-- 导航栏 -->
+    <div class="navbar">
+        <a href="index.html">首页</a>
+        <a href="chat.html">聊天</a>
+        <div class="navbar-right">
+            <a href="login.html">登录/注册</a>
+        </div>
+        <!-- 添加其他导航链接 -->
+    </div>
+
+    <!-- 父容器 -->
+    <div class="lite-chatmaster">
+        <!-- 聊天栏 -->
+        <div class="lite-chatbox"></div>
+        <!-- 输入框 -->
+        <div class="lite-chatinput">
+            <hr class="boundary" /> 
+            <!-- 文字输入框 -->
+            <div aria-label="input area"
+                 class="editor chatinput"
+                 contenteditable="true"
+                 ref="editor">
+            </div>
+        <!-- 发送按钮 -->
+        <button class="send">发送</button>
+        </div>
+    </div>
+
+    <!-- 预加载的交互信息 -->
+    <script src="https://cdn.jsdelivr.net/gh/MorFansLab/LiteWebChat_Frame/lite-chatbox.min.js"></script>
+    <script>
+        const htmls = [
+            {
+                messageType: "text",
+                headIcon: "img/chatbot.jpg",
+                name: "GPT-3.5",
+                position: "left",
+                html: "你好，我是ChatGPT聊天机器人，有什么我可以帮助你的吗？", 
+            },
+            {
+                messageType: "text",
+                headIcon: "img/avatar.jpg",
+                name: "用户",
+                position: "right",
+                html: "你好，接下来我会问一些感兴趣的问题。", 
+            }
+        ];
+        beforeRenderingHTML(htmls, ".lite-chatbox");
+    </script>
+
+    <script>
+        document.querySelector(".send").onclick = async function () {       // 点击发送按钮事件回调，异步函数
+            var question = sendMessage();                                   // 发送数据，并展示在聊天框中
+            await processMessage(question);                                 // 同步打印服务器返回的信息
+        };
+
+        var chatInput=document.querySelector(".lite-chatinput>.chatinput"); // 添加按下回车事件监听器
+        chatInput.focus();
+        chatInput.addEventListener("keydown", async function (event) {
+            if (event.keyCode === 13 && !event.shiftKey) {
+                event.preventDefault();                                     // 阻止默认的换行行为
+                var question = sendMessage();
+                await processMessage(question);
+            }
+        });
+
+        function sendMessage() {
+            var userMessageHtml = document.querySelector(".chatinput").innerHTML;
+            var userMessage = userMessageHtml.replace(/<br\s*\/?>/g, "\n").trim();  // 将<br>替换为\n，并去除首尾空白
+            userMessage = userMessage.toString();                                   // 将userMessage转换为字符串
+            if (userMessage !== "") {                                               // 只有在用户输入非空内容时才进行操作
+                htmls.push({                                                        // 输入框文本渲染
+                    messageType: "text",
+                    headIcon: "img/avatar.jpg",
+                    name: "用户",
+                    position: "right",
+                    html: userMessage,
+                });
+                beforeRenderingHTML(htmls, ".lite-chatbox");
+
+                document.querySelector(".chatinput").innerHTML = "";
+                htmls.push({
+                    messageType: "text",
+                    headIcon: "img/chatbot.jpg",
+                    name: "GPT-3.5",
+                    position: "left",
+                    html: "请稍等，让我先思考一下~~",
+                });
+                beforeRenderingHTML(htmls, ".lite-chatbox");
+                return userMessage;
+            }
+        }
+
+        function processMessage(userMessage) {
+            var originalString = escapeNewlines(userMessage)
+            console.log(originalString);
+            const messageToServer = {                                       // 向服务器发送用户提问
+                user: 'User',
+                message: originalString
+            };
+            fetch('/send_msg', {                                            // 发送 JSON 数据到服务器，可通过 fetch 或 WebSocket
+                method: 'POST',
+                body: JSON.stringify(messageToServer),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())                              // 解析服务器的 JSON 响应
+            .then(data => {
+                var serverResponse = data.message;
+                var res = serverResponse                                    // text开头有'\n', 删除消息文本开头的换行符和问号
+                for (var i=0; i<serverResponse.length; i++){
+                    if (serverResponse[i]=='\n' || serverResponse[i]=='？'){
+                        res = serverResponse.substr(i+1);
+                    }else{
+                        break;
+                    }
+                }
+                console.log(res);
+                
+                htmls.push({                                                
+                    messageType: "text",
+                    headIcon: "img/chatbot.jpg",
+                    name: "GPT-3.5",
+                    position: "left",
+                    html: res,
+                });
+                beforeRenderingHTML(htmls, ".lite-chatbox");
+            })
+            .catch(error => {
+                htmls.push({
+                    messageType: "text",
+                    headIcon: "img/chatbot.jpg",
+                    name: "GPT-3.5",
+                    position: "left",
+                    html: "网络错误!",
+                });
+                beforeRenderingHTML(htmls, ".lite-chatbox");
+                console.error('Error:', error);
+            });
+        }
+
+        function escapeNewlines(input) {                                   // 发送给服务器消息时，保留转义消息中的换行符
+            return input.replace(/\n/g, "\\n");
+        }
+    </script>
+
+</body>
+</html>
