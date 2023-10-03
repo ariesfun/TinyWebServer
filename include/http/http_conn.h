@@ -5,6 +5,7 @@
 #include <netinet/in.h> // sockaddr_in类型
 #include <sys/stat.h>   // stat结构体
 #include <map>
+#include <curl/curl.h>  // libcurl库
 #include "epoller.h"
 #include "mysql_conn.h"
 #include "dbconn_pool.h"
@@ -15,7 +16,7 @@ private:
     enum METHOD { GET = 0, POST, HEAD, PUT, DELETE, TRACE, OPTIONS, CONNECT };                    // HTTP请求方法，这里支持 GET 和 POST
     enum CHECK_STATE { CHECK_STATE_REQUESTLINE = 0, CHECK_STATE_HEADER, CHECK_STATE_CONTENT };    // 解析客户端请求时，主状态机的状态
     enum HTTP_CODE   { NO_REQUEST, GET_REQUEST, BAD_REQUEST, NO_RESOURCE, FORBIDDEN_REQUEST,      // 服务器处理HTTP请求的可能结果，报文解析的结果
-                       FILE_REQUEST, INTERNAL_ERROR, CLOSED_CONNECTION };
+                       FILE_REQUEST, JSON_REQUEST, INTERNAL_ERROR, CLOSED_CONNECTION };
     enum LINE_STATUS { LINE_OK = 0, LINE_BAD, LINE_INCOMPLETE };                                  // 从状态机的三种可能状态，即行的读取状态
 
 public:
@@ -35,6 +36,7 @@ public:
     static const int READ_BUFFER_SIZE = 2048;                    // 读缓冲区大小  
     static const int WRITE_BUFFER_SIZE = 2048;                   // 写缓冲区大小
     static const int FILEPATH_LEN = 200;                         // 访问的文件名路径的最大长度
+    static const int CHAT_BUFFER_SIZE = 1024 * 128;
 
 private:
     void my_init();                         // 初始化一些需要保存的解析信息或响应信息
@@ -72,11 +74,11 @@ private:
     bool process_response(HTTP_CODE ret);                       // 进行HTTP响应
     bool add_response_info(const char* format, ...);            // 具体的响应行信息（可变参字符串）
     bool add_response_statline(int status, const char* title);
-    void add_response_headers(int content_length);
+    void add_response_headers(int content_length, const char* content_type);
     bool add_response_content(const char* content);
     bool add_response_connstatus();
     bool add_response_contentlen(int content_length);
-    bool add_response_contenttype();
+    void add_response_contenttype(const char* content_type);
     bool add_response_blankline();
 
 public:
@@ -86,10 +88,22 @@ private:
     DBConnPool* db_pool;
     std::shared_ptr<MySQLConn> conn;
     char m_usrname[128], m_usrpwd[128];
-    void parse_detail_postinfo();
-    void generateHTMLWithMessage(const char* message);
+    void parse_login_postinfo();                               // 处理登录/注册请求       
     bool process_register_request();
     bool process_login_request();
+
+    std::string content_msg_str;
+    std::string reply_content_json;
+    void parse_usrmsg_postinfo();                              // 处理用户聊天提问
+    static std::string chat_reply_str;
+    std::string generateAIReply(std::string message);          // 根据用户的提问生成回复信息
+    void process_chatQA_request();
+
+    static int buffer_offset;                                  // 数据缓冲区偏移
+    static char chat_reply_buffer[CHAT_BUFFER_SIZE];           // CHAT回复数据缓冲区
+    void send_request_chat(const char *data);  // ChatGPT-API(发送提问解析回复)
+    static size_t write_callback_chat(char *ptr, size_t size, size_t nmemb, void *userdata);
+    int debug_callback(CURL *curl, curl_infotype type, char *data, size_t size, void *userptr);
 
 private:
     char* m_url;                                                // 请求的目标文件名

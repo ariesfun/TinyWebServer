@@ -16,4 +16,4 @@ aux_source_directory(./src/server SERVER_SRCS)
 add_executable(TinyWebServer main.cpp ${DIR_SRCS} ${TIMER_SRCS} ${POOL_SRCS} ${HTTP_SRCS} ${SERVER_SRCS})
 
 # 添加链接库
-target_link_libraries(TinyWebServer pthread mysqlclient jsoncpp)
+target_link_libraries(TinyWebServer pthread mysqlclient jsoncpp curl)

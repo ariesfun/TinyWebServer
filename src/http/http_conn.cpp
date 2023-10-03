@@ -8,13 +8,21 @@
 #include <sys/uio.h>    // writev()
 #include <cstdarg>      // va_start()
 
+#include <jsoncpp/json/json.h>
+#include <sstream>
+
 #include "logger.h"
 using namespace ariesfun::log;
 
 int HttpConn::m_http_epollfd = -1;
 int HttpConn::m_client_cnt = 0;
 time_t HttpConn::m_active_time = 0;
+std::string HttpConn::chat_reply_str = "";
+int HttpConn::buffer_offset = 0;                                  
+char HttpConn::chat_reply_buffer[CHAT_BUFFER_SIZE] = {0};
 
+// OPENAI-KEY
+const char *openai_key = "sk-ShXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
 // 网站资源根目录
 const char* web_root_src = "/home/ariesfun/Resume_Projects/TinyWebServer/resources";
 
@@ -36,20 +44,19 @@ HttpConn::~HttpConn() {}
 // 初始化客户端的连接状态信息
 void HttpConn::init(int sockfd, const sockaddr_in &addr, time_t tick)
 {
-    m_http_sockfd = sockfd;     // 保存当前连接的客户端信息
+    m_http_sockfd = sockfd;                             // 保存当前连接的客户端信息
     m_http_addr = addr;
     m_active_time = tick;
     clientinfo_is_valid = true;
-    int reuse = 1;              // 设置端口复用
+    int reuse = 1;                                      // 设置端口复用
     int ret = setsockopt(m_http_sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
     if(ret == -1) {
         Error("setsockopt oprate error!");
     }
-    // proactor模式，先让HttpConn类来处理
-    m_epoller->add_fd(m_http_epollfd, sockfd, true);
+    m_epoller->add_fd(m_http_epollfd, sockfd, true);    // proactor模式，先让HttpConn类来处理
     m_client_cnt++;
     my_init();
-    init_userdb_info();         // 有用户连接时，预先获取数据中的用户信息 
+    init_userdb_info();                                 // 有用户连接时，预先获取数据中的用户信息 
 }
 
 // 初始化解析或响应要保存的信息
@@ -83,7 +90,7 @@ void HttpConn::my_init()
 void HttpConn::init_userdb_info()
 {
     db_pool = DBConnPool::getDBConnPool();
-    conn = db_pool->getDBConn(); // 从数据库获得一个连接，可以实现连接的回收
+    conn = db_pool->getDBConn();                            // 从数据库获得一个连接，可以实现连接的回收
     std::string sql = "select username, password from user";
     bool flag = conn->selectDB(sql);
     if(!flag) {
@@ -170,8 +177,7 @@ bool HttpConn::write()
             m_iv[0].iov_base = m_writebuffer + send_bytes;
             m_iv[0].iov_len = m_iv[0].iov_len - temp;
         }
-        // 数据已经发送完毕
-        if(to_send_bytes <= 0) {
+        if(to_send_bytes <= 0) {    // 数据已经发送完毕
             free_mmap();            // 重置epolloneshot事件
             m_epoller->modify_fd(m_http_epollfd, m_http_sockfd, EPOLLIN);
             if(m_conn_status) {     // 请求为长连接
@@ -210,17 +216,16 @@ HttpConn::HTTP_CODE HttpConn::parse_request()
     HTTP_CODE request_ret = NO_REQUEST; 
     char* line_data = nullptr;
     while(((m_cur_mainstate == CHECK_STATE_CONTENT) && (line_status == LINE_OK)) || // 主状态机解析请求体，并且从状态机解析行成功作为循环入口
-          ((line_status = parse_detail_line()) == LINE_OK)) {                       // 每次解析一行数据
-        // 解析到了请求体或一行完整数据
-        line_data = get_linedata();                     // 获得一行数据
-        m_start_line = m_cur_index;                     // 更新解析的行首位置
-        Info("got 1 http line data:\n%s", line_data);
-        switch(m_cur_mainstate)                         // 主状态机 (有效状态机)
+          ((line_status = parse_detail_line()) == LINE_OK)) {                       // 每次解析一行数据 (解析到了请求体或一行完整数据)
+        line_data = get_linedata();                                                 // 获得一行数据
+        m_start_line = m_cur_index;                                                 // 更新解析的行首位置
+        // Info("got 1 http line data:\n%s", line_data);
+        switch(m_cur_mainstate)                                                     // 主状态机 (有效状态机)
         {
             case CHECK_STATE_REQUESTLINE:
             {
                 request_ret = parse_request_line(line_data);
-                if(request_ret == BAD_REQUEST) {        // 语法错误
+                if(request_ret == BAD_REQUEST) {                                    // 语法错误
                     return BAD_REQUEST;
                 }
                 break;
@@ -231,18 +236,18 @@ HttpConn::HTTP_CODE HttpConn::parse_request()
                 if(request_ret == BAD_REQUEST) {
                     return BAD_REQUEST;
                 }
-                else if(request_ret == GET_REQUEST) {   // 获得了一个完整的客户请求
-                    return do_request();                // 进行响应
+                else if(request_ret == GET_REQUEST) {                               // 获得了一个完整的客户请求
+                    return do_request();                                            // 进行响应
                 }
                 break;
             }
-            case CHECK_STATE_CONTENT:                   // 用于POST，解析请求体的内容
+            case CHECK_STATE_CONTENT:                                               // 用于POST，解析请求体的内容
             {
                 request_ret = parse_request_content(line_data);
                 if(request_ret == GET_REQUEST) {
                     return do_request();
                 }
-                line_status = LINE_INCOMPLETE;          // 解析完成需要退出，更新状态避免再次进行循环，更新行状态为行不完整
+                line_status = LINE_INCOMPLETE;                                      // 解析完成需要退出，更新状态避免再次进行循环，更新行状态为行不完整
                 break;
             }          
             default:
@@ -255,14 +260,14 @@ HttpConn::HTTP_CODE HttpConn::parse_request()
 // 读信息，解析请求首行，提取信息'GET /index.html HTTP/1.1' : 请求方法 | 目标URL | HTTP版本
 HttpConn::HTTP_CODE HttpConn::parse_request_line(char* text)
 {
-    m_url = strpbrk(text, " \t");   // 判断字符空格或制表符哪个先在text中出现，并返回位置
+    m_url = strpbrk(text, " \t");            // 判断字符空格或制表符哪个先在text中出现，并返回位置
     if(!m_url) {
         return BAD_REQUEST;
     }
     *m_url++ = '\0';
     // GET\0/index.html HTTP/1.1
 
-    char* method = text;            // 得到请求方法
+    char* method = text;                    // 得到请求方法
     if(strcasecmp(method, "GET") == 0) {
         m_method = GET; 
     }
@@ -288,20 +293,18 @@ HttpConn::HTTP_CODE HttpConn::parse_request_line(char* text)
     // http://192.168.1.1:8888/index.html
     if(strncasecmp(m_url, "http://", 7) == 0) {
         m_url += 7; // 192.168.1.1:8888/index.html
-        m_url = strchr(m_url, '/'); // /index.html
+        m_url = strchr(m_url, '/');         // /index.html
     }
 
     if(!m_url || m_url[0] != '/') {
         return BAD_REQUEST;
     }
 
-    // 当url为'/'时，显示网站首页
-    if(strlen(m_url) == 1) {
-        strcat(m_url, "home.html");
+    if(strlen(m_url) == 1) {                // 当url为'/'时，先显示登录界面
+        strcat(m_url, "login.html");
     }
 
-    // 更新检查状态,主状态机状态变为检查请求头
-    m_cur_mainstate = CHECK_STATE_HEADER;
+    m_cur_mainstate = CHECK_STATE_HEADER;   // 更新检查状态,主状态机状态变为检查请求头
     return NO_REQUEST;
 }
 
@@ -334,7 +337,7 @@ HttpConn::HTTP_CODE HttpConn::parse_request_headers(char* text)
         m_content_length = atol(text);
     }
     else {                                                   // 其他，出现未知头部字段
-        Info("unknow header info:\n%s", text);
+        // Info("unknow header info:\n%s", text);
     }
     return NO_REQUEST;
 }
@@ -391,7 +394,7 @@ HttpConn::HTTP_CODE HttpConn::do_request()
     if(is_post_status && (strcmp(m_url, "/register") == 0)) {     // 处理注册请求
         bool register_ret = process_register_request();
         if (register_ret) {         
-            strncat(m_real_file, "/home.html", FILEPATH_LEN - len - 1);
+            strncat(m_real_file, "/success.html", FILEPATH_LEN - len - 1);
             // 给客户端生成响应
             // 注册成功，弹窗提示（"注册成功，请先登录"）
         } else {
@@ -402,11 +405,15 @@ HttpConn::HTTP_CODE HttpConn::do_request()
     else if(is_post_status && (strcmp(m_url, "/login") == 0)) {   // 处理登录请求
         bool login_ret = process_login_request();
         if (login_ret) {
-            strncat(m_real_file, "/welcome.html", FILEPATH_LEN - len - 1);
+            strncat(m_real_file, "/index.html", FILEPATH_LEN - len - 1);
         } else {
             // 登录失败，用户名或密码错误!
             strncat(m_real_file, "/error.html", FILEPATH_LEN - len - 1);
         }
+    }
+    else if(is_post_status && (strcmp(m_url, "/send_msg") == 0)) {   // 处理登录请求
+        process_chatQA_request();
+        return JSON_REQUEST;
     }
     else { // 其他文件请求路径
         if(len < FILEPATH_LEN-1) {
@@ -462,7 +469,7 @@ bool HttpConn::process_response(HTTP_CODE ret)
         case BAD_REQUEST:       // 语法错误
         {
             add_response_statline(400, error_400_title);
-            add_response_headers(strlen(error_400_form));
+            add_response_headers(strlen(error_400_form), "text/html");
             if(!add_response_content(error_400_form)) {
                 return false;
             }
@@ -471,7 +478,7 @@ bool HttpConn::process_response(HTTP_CODE ret)
         case FORBIDDEN_REQUEST: // 访问禁止
         {
             add_response_statline(403, error_403_title);
-            add_response_headers(strlen(error_403_form));
+            add_response_headers(strlen(error_403_form), "text/html");
             if(!add_response_content(error_403_form)) {
                 return false;
             }
@@ -480,7 +487,7 @@ bool HttpConn::process_response(HTTP_CODE ret)
         case NO_RESOURCE:       // 没有该资源(404)
         {
             add_response_statline(404, error_404_title);
-            add_response_headers(strlen(error_404_form));
+            add_response_headers(strlen(error_404_form), "text/html");
             if(!add_response_content(error_404_form)) {
                 return false;
             }
@@ -489,7 +496,7 @@ bool HttpConn::process_response(HTTP_CODE ret)
         case INTERNAL_ERROR:    // 内部错误
         {   
             add_response_statline(500, error_500_title);
-            add_response_headers(strlen(error_500_form));
+            add_response_headers(strlen(error_500_form), "text/html");
             if(!add_response_content(error_500_form)) {
                 return false;
             }
@@ -498,7 +505,7 @@ bool HttpConn::process_response(HTTP_CODE ret)
         case FILE_REQUEST:      // 访问文件请求
         {
             add_response_statline(200, ok_200_title);
-            add_response_headers(m_file_status.st_size);
+            add_response_headers(m_file_status.st_size, "text/html");
 
             // iovec指向响应报文缓冲区
             m_iv[0].iov_base = m_writebuffer;   // 指向数据块的起始地址
@@ -510,6 +517,28 @@ bool HttpConn::process_response(HTTP_CODE ret)
             m_iv_cnt = 2;
 
             to_send_bytes = m_write_index + m_file_status.st_size;
+            return true;
+        }
+        case JSON_REQUEST:      // 返回 JSON 数据
+        {
+            // 创建响应头部
+            add_response_statline(200, ok_200_title);
+            add_response_headers(reply_content_json.length(), "application/json");
+            if(!add_response_content(reply_content_json.c_str())) {
+                return false;
+            }
+            
+            // 将 HTTP 头信息写入发送缓冲区
+            m_iv[0].iov_base = m_writebuffer;
+            m_iv[0].iov_len = m_write_index;
+
+            // 设置要发送的 JSON 数据
+            m_iv[1].iov_base = const_cast<char*>(reply_content_json.c_str());
+            m_iv[1].iov_len = reply_content_json.size();
+            m_iv_cnt = 2;
+
+            // 设置要发送的字节数
+            to_send_bytes = m_write_index + reply_content_json.size();
             return true;
         }
         default:
@@ -550,10 +579,10 @@ bool HttpConn::add_response_statline(int status, const char* title)
 }
 
 // 生成响应头部
-void HttpConn::add_response_headers(int content_length)
+void HttpConn::add_response_headers(int content_length, const char* content_type)
 {
     add_response_contentlen(content_length);
-    add_response_contenttype();
+    add_response_contenttype(content_type);
     add_response_connstatus();
     add_response_blankline();
 }
@@ -577,10 +606,10 @@ bool HttpConn::add_response_contentlen(int content_length)
 }
 
 // 生成响应体类型
-bool HttpConn::add_response_contenttype()
+void HttpConn::add_response_contenttype(const char* content_type)
 {
     // 需要根据用户的请求，来指定响应体的类型
-    return add_response_info("Content-Type: %s\r\n", "text/html");
+    add_response_info("Content-Type: %s\r\n", content_type);
 }
 
 // 生成响应头类型
@@ -590,7 +619,7 @@ bool HttpConn::add_response_blankline()
 }
 
 // 解析具体的POST请求体中的内容并保存
-void HttpConn::parse_detail_postinfo() 
+void HttpConn::parse_login_postinfo() 
 {
     // 提取用户名和密码 username=zhang&password=9090
     int i = 0;
@@ -608,7 +637,7 @@ void HttpConn::parse_detail_postinfo()
 
 bool HttpConn::process_register_request()
 {
-    parse_detail_postinfo();
+    parse_login_postinfo();
     if(userdb_info.find(m_usrname) == userdb_info.end()) { // 是新用户可以注册
         char sql[1024] = {0};
         sprintf(sql, "insert into user values('%s', '%s')", m_usrname, m_usrpwd);
@@ -623,7 +652,7 @@ bool HttpConn::process_register_request()
 
 bool HttpConn::process_login_request()
 {
-    parse_detail_postinfo();
+    parse_login_postinfo();
     if((userdb_info.find(m_usrname) != userdb_info.end()) && 
        (userdb_info[m_usrname] == m_usrpwd)) {               // 信息校验成功
         return true;
@@ -631,4 +660,195 @@ bool HttpConn::process_login_request()
     else {
         return false;
     }
+}
+
+void HttpConn::parse_usrmsg_postinfo()
+{
+    char* finish_reason_str = strstr(str_postinfo, "message");              // 检查缓冲区中是否包含完整的 Json 数据包
+    if(finish_reason_str == nullptr) {                                      // 没有收到消息
+        return;
+    }                                          
+    Json::Value root;                                                       // 说明收到了一个完整的 JSON 数据包, 开始解析 JSON 数据
+    Json::CharReaderBuilder reader;
+    std::istringstream json_stream(str_postinfo);
+    std::string errs;
+    bool no_errors = Json::parseFromStream(reader, json_stream, &root, &errs);
+    if(no_errors) {
+        Json::Value message = root["message"];
+        if (!message.isNull()) {       
+            content_msg_str = message.asString();
+            // printf("[User Question]: %s\n\n", content_msg_str.c_str());
+            Info("[User Question]:\n%s", content_msg_str.c_str());
+        }
+        else {
+            // printf("Content is missing or null!\n");
+            Error("Content is missing or null!");
+        }
+    }
+    else {                                                                  // JSON 解析失败，处理错误
+        std::cerr << "JSON Parsing error:\n" << errs << std::endl;
+        Error("User JSON data parsing failed!");
+    }
+}
+
+std::string HttpConn::generateAIReply(std::string message)
+{
+    send_request_chat(message.c_str());
+    return chat_reply_str;
+}
+
+void HttpConn::process_chatQA_request()
+{
+    parse_usrmsg_postinfo();
+
+    // 创建一个用于响应用户的 JSON 对象
+    Json::Value response;
+    response["Server"] = "server_reply";
+
+    // 处理客户端发送的 JSON 数据
+    // 实现业务逻辑，根据用户的问题生成回复（ChatGPT交互核心）
+    std::string response_content_str = generateAIReply(content_msg_str);
+    response["message"] = response_content_str;
+
+    // 将JSON对象转换为字符串，作为响应体消息
+    Json::StreamWriterBuilder writer;
+    reply_content_json = Json::writeString(writer, response);
+    // std::cout << "Server Reply Json String: \n" << reply_content_json << std::endl;
+    Info("Server Reply Json String:\n%s", reply_content_json.c_str());
+}
+
+void HttpConn::send_request_chat(const char *data)
+{
+    CURL *curl;
+    CURLcode res;
+
+    curl = curl_easy_init();                                                                            // 初始化Curl
+    if(curl) {  
+        // curl_easy_setopt(curl, CURLOPT_PROXY, "http://192.168.184.10:7890");                         // 设置代理服务器的地址
+        struct curl_slist *headers = nullptr;                                                           // 设置请求头
+        char header_auth[1000];
+        sprintf(header_auth, "Authorization: Bearer %s", openai_key);
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+        headers = curl_slist_append(headers, header_auth);
+        
+        char messagesTemplate[] = "[{\"role\": \"user\", \"content\": \"%s\"}]";                        // 构建请求数据
+        char chatRequestTemplate[] = "{\"model\": \"%s\", \"messages\": %s}";
+        char message[4096], payload_send_char_message[10240]; // 请求正文的消息
+        sprintf(message, messagesTemplate, data);
+        sprintf(payload_send_char_message, chatRequestTemplate, "gpt-3.5-turbo", message);  
+
+        curl_easy_setopt(curl, CURLOPT_URL, "https://api.openai.com/v1/chat/completions");              // 设置Curl选项
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload_send_char_message);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, HttpConn::write_callback_chat);
+
+        // curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, HttpConn::debug_callback);                     // 启用调试输出
+        // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);                                                 // 启用详细输出,-v选项
+        
+        res = curl_easy_perform(curl);                                                                  // 执行请求
+        if(res != CURLE_OK) {
+            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+            // printf("请重新尝试提问哈~~\n");
+            Error("curl_easy_perform() failed: %s\n请重新尝试提问哈~~", curl_easy_strerror(res));
+        }
+                
+        curl_slist_free_all(headers);
+        curl_easy_cleanup(curl);                                                                        // 清理Curl资源                           
+    }
+}
+
+size_t HttpConn::write_callback_chat(char *ptr, size_t size, size_t nmemb, void *userdata)
+{
+    size_t response_size = size * nmemb;                                        // 接收到的数据的总大小
+    char *response = static_cast<char*>(malloc(response_size + 1));
+    strncpy(response, ptr, response_size);
+    response[response_size] = '\0';
+    memcpy(chat_reply_buffer + buffer_offset, response, response_size);         // 将接收到的数据追加到缓冲区
+    buffer_offset += response_size;
+    free(response);
+
+    char* finish_reason_str = strstr(chat_reply_buffer, "finish_reason");       // 检查缓冲区中是否包含完整的 Json 数据包
+    char* error_msg_str = strstr(chat_reply_buffer, "error");
+    if(finish_reason_str != nullptr) {                                          // 说明收到了一个完整的 JSON 数据包
+        Json::Value root;                                                       // 解析JSON数据
+        Json::CharReaderBuilder reader;
+        std::istringstream json_stream(chat_reply_buffer);
+        std::string errs;
+        bool no_errors = Json::parseFromStream(reader, json_stream, &root, &errs);
+        if(no_errors) {
+//            Json::StreamWriterBuilder writer;                                 // 显示解析后的字符串
+//            std::string res = Json::writeString(writer, root);
+//            std::cout << "Parsed Json String: \n" << res << std::endl;
+
+            if (root.isMember("choices") && root["choices"].isArray()) {        // "choices" 字段存在且是一个数组
+                Json::Value choices = root["choices"];
+                if (!choices.empty() && choices[0].isObject()) {                // choices 不为空且第一个元素是对象类型
+                    Json::Value message = choices[0]["message"];
+                    if (!message.empty() && message.isObject()) {               // message 不为空且是对象类型
+                        Json::Value content = message["content"];
+                        if (!content.isNull()) {                                // content 存在
+                            Json::Value finish_reason = choices[0]["finish_reason"];
+                            if (!finish_reason.isNull()) {                      // finish_reason 存在
+                                chat_reply_str = content.asString();
+                                Info("[GPT3 Answer]:\n%s", chat_reply_str.c_str());
+                            }
+                            else {
+                                Error("Finish Reason is missing!");
+                            }
+                        }
+                        else {
+                            Error("Content is missing or null!");
+                        }
+                    }
+                }
+                // 清空缓冲区和偏移量
+                memset(chat_reply_buffer, 0, sizeof (chat_reply_buffer));
+                buffer_offset = 0;
+            }
+            else {
+                Error("Response json data is error!");
+            }
+        }
+        else {
+            // JSON 解析失败，处理错误
+            std::cerr << "JSON Parsing error:\n" << errs << std::endl;
+            memset(chat_reply_buffer, 0, sizeof(chat_reply_buffer));
+            buffer_offset = 0;
+
+        }
+    }
+    else if(error_msg_str != nullptr) {                                 // 说明收到了错误消息
+        Json::Value root;                                               // 解析JSON数据
+        Json::CharReaderBuilder reader;
+        std::istringstream json_stream(chat_reply_buffer);
+        std::string errs;
+        bool no_errors = Json::parseFromStream(reader, json_stream, &root, &errs);
+        if(no_errors) {
+            Json::Value error_msg = root["error"]["message"];
+            std::string error_str = error_msg.asString();
+            printf("\n[Server Error]: %s\n", error_str.c_str());
+            memset(chat_reply_buffer, 0, sizeof(chat_reply_buffer));
+            buffer_offset = 0;
+            return -1;
+        }
+        else {
+            // JSON 解析失败，处理错误
+            std::cerr << "JSON Parsing error: " << errs << std::endl;
+            Error("User JSON data parsing failed!");
+        }
+        memset(chat_reply_buffer, 0, sizeof(chat_reply_buffer));
+        buffer_offset = 0;
+    }
+
+    usleep(1000*400); // 间隔 400ms 后再次获取数据
+    return response_size;
+}
+
+int HttpConn::debug_callback(CURL *curl, curl_infotype type, char *data, size_t size, void *userptr) {
+    // 输出请求数据
+    if (type == CURLINFO_HEADER_OUT || type == CURLINFO_DATA_OUT) {
+        // printf("Sent Data:\n%.*s\n", (int)size, data);
+        Info("Sent Data:\n%.*s", (int)size, data);
+    }
+    return 0;
 }
